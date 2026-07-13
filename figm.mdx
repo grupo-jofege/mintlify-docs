@@ -1,0 +1,941 @@
+---
+title: "Guia para Figma — Portal de Requisição de RH"
+---
+
+Guia prático para transformar o mapa de telas do Portal de Requisição de RH em uma estrutura de trabalho no Figma, com foco em layout, biblioteca de componentes, estados e tokens.
+
+## Diretriz de plataforma
+
+O produto deve nascer como `site web`, com experiência otimizada para desktop e boa adaptação para larguras menores dentro do contexto de navegador. Ao mesmo tempo, a linguagem visual e a arquitetura de componentes devem ser desenhadas para permitir evolução futura para `app`, sem recomeçar o design system.
+
+Na prática, isso significa:
+
+- priorizar padrões de navegação e densidade adequados para web
+- evitar soluções muito dependentes de hover como única forma de interação
+- criar componentes com variantes que possam ser reutilizadas em contextos touch
+- separar bem `layout responsivo`, `componente` e `regra de negócio`
+- pensar desde cedo em tokens e componentes com comportamento cross-platform
+
+## Princípios de desenho web-first, app-ready
+
+### Web-first
+
+Prioridades do MVP:
+
+- leitura rápida em desktop
+- tabelas, filtros e formulários com boa densidade de informação
+- navegação clara em ambiente web
+- ações principais sempre visíveis
+
+### App-ready
+
+Cuidados desde já:
+
+- áreas de clique confortáveis para touch
+- componentes que funcionem sem hover
+- headers, cards e formulários que possam empilhar bem em telas menores
+- evitar layouts que dependam exclusivamente de tabelas largas
+- modelar navegação e ações em blocos reaproveitáveis
+
+## Estrutura do arquivo no Figma
+
+Sugestão de páginas dentro do arquivo:
+
+1. `00. Capa`
+2. `01. Fundamentos`
+3. `02. Componentes`
+4. `03. Padrões`
+5. `04. Telas`
+6. `05. Fluxos`
+7. `06. Playground`
+
+## Página 00. Capa
+
+Usar para contexto rápido do arquivo.
+
+Blocos sugeridos:
+
+- nome do produto
+- objetivo do arquivo
+- versão
+- data da última atualização
+- responsáveis por produto, design e desenvolvimento
+
+## Página 01. Fundamentos
+
+Essa página concentra as decisões visuais base.
+
+### Breakpoints de referência
+
+Como o produto nasce para web, mas pode virar app no futuro, vale trabalhar com alguns frames e breakpoints de referência desde o começo:
+
+- `Desktop / 1440`
+- `Desktop / 1280`
+- `Tablet / 1024`
+- `Mobile referência / 390 ou 428`
+
+Mesmo que o MVP não tenha tela mobile fechada, manter uma referência menor ajuda a validar se a arquitetura visual está pronta para evoluir.
+
+### Tokens que vale desenhar primeiro
+
+#### Cores
+
+Estruture por grupos:
+
+- `Brand`
+- `Neutral`
+- `Success`
+- `Warning`
+- `Danger`
+- `Info`
+
+Sugestão de aplicação:
+
+- `Brand`: CTAs, links principais, foco
+- `Neutral`: superfícies, bordas, textos
+- `Success`: aprovado, concluído, sucesso operacional
+- `Warning`: atenção, pendência, carregamento parcial
+- `Danger`: erro, reprovação, falha
+- `Info`: mensagens contextuais e estados informativos
+
+#### Tipografia
+
+Crie estilos separados para:
+
+- `Display`
+- `Heading`
+- `Title`
+- `Body`
+- `Caption`
+- `Label`
+
+Hierarquia mínima recomendada:
+
+- `Heading/L`
+- `Heading/M`
+- `Title/L`
+- `Title/M`
+- `Body/M`
+- `Body/S`
+- `Label/M`
+- `Label/S`
+
+#### Espaçamento
+
+Adote uma escala consistente. Exemplo:
+
+- `4`
+- `8`
+- `12`
+- `16`
+- `24`
+- `32`
+- `40`
+- `48`
+- `64`
+
+Ao escolher espaçamentos, prefira uma escala que funcione tanto em web quanto em contextos mobile futuros.
+
+#### Raios
+
+Pelo menos:
+
+- `4`
+- `8`
+- `12`
+- `16`
+- `24`
+
+#### Sombra
+
+Separe em poucos níveis:
+
+- `Shadow/Sm`
+- `Shadow/Md`
+- `Shadow/Lg`
+
+#### Bordas
+
+Padronize:
+
+- `Border/Subtle`
+- `Border/Default`
+- `Border/Strong`
+- `Border/Interactive`
+
+## Página 02. Componentes
+
+Monte essa página como biblioteca principal do produto.
+
+### Regra geral para componentes
+
+Sempre que possível, desenhe componentes separando:
+
+- `anatomia`
+- `estado`
+- `densidade`
+- `plataforma`, quando necessário
+
+Se um componente tiver chance real de ir para app depois, já vale prever uma variante ou nota de adaptação.
+
+## Componentes prioritários
+
+### Shell e navegação
+
+#### `AppShell`
+
+Variantes:
+
+- `sidebar expanded`
+- `sidebar collapsed`
+- `with breadcrumb`
+- `without breadcrumb`
+
+Partes:
+
+- top bar
+- navegação lateral
+- área de conteúdo
+- slot para header da página
+
+#### `TopBar`
+
+Elementos:
+
+- título ou contexto
+- busca opcional
+- notificações, se existir
+- avatar
+- menu do usuário
+
+#### `Sidebar` ou `NavigationRail`
+
+Itens sugeridos:
+
+- Minhas Solicitações
+- Nova Solicitação
+- Administração
+
+Estados:
+
+- default
+- hover
+- active
+- disabled
+
+### Cabeçalhos e blocos
+
+#### `PageHeader`
+
+Variantes:
+
+- com descrição
+- sem descrição
+- com breadcrumb
+- com CTA primário
+- com CTA primário e secundário
+
+#### `InfoCard`
+
+Uso:
+
+- resumos de status
+- KPIs
+- identificadores
+- blocos de informação de contexto
+
+Variantes:
+
+- compact
+- default
+- highlight
+- status
+
+#### `SectionCard`
+
+Uso:
+
+- agrupar blocos de formulário
+- agrupar dados de detalhe
+- organizar áreas administrativas
+
+Variantes:
+
+- simple
+- with header
+- collapsible
+
+### Inputs
+
+#### `TextField`
+
+Variantes:
+
+- default
+- filled
+- focused
+- error
+- disabled
+- read only
+
+#### `PasswordField`
+
+Igual ao `TextField`, com ação de mostrar ou ocultar senha.
+
+#### `Select`
+
+Variantes:
+
+- default
+- open
+- selected
+- error
+- disabled
+- loading
+
+#### `Autocomplete`
+
+Necessário para listas maiores como função, obra ou projeto.
+
+#### `UserSearchSelect`
+
+Necessário para requisitante real e RH central.
+
+Estados:
+
+- vazio
+- digitando
+- carregando
+- resultado encontrado
+- sem resultado
+- erro
+
+#### `NumberField`
+
+Uso:
+
+- quantidade de vagas
+
+#### `DatePicker`
+
+Uso:
+
+- previsão de início
+
+#### `Textarea`
+
+Uso:
+
+- justificativa
+- observações
+- justificativa de reprovação
+
+Variantes:
+
+- default
+- with counter
+- error
+- disabled
+
+### Botões e ações
+
+#### `Button`
+
+Variantes mínimas:
+
+- primary
+- secondary
+- tertiary
+- destructive
+
+Estados:
+
+- default
+- hover
+- pressed
+- loading
+- disabled
+
+#### `IconButton`
+
+Uso:
+
+- ações rápidas
+- fechar modal
+- expandir ou recolher
+
+### Feedback e status
+
+#### `StatusBadge`
+
+Criar variantes para:
+
+- `Em andamento`
+- `Aprovado`
+- `Cancelado`
+- `Concluído`
+- `Falha ao enviar`
+- `Rascunho`, se existir
+
+#### `InlineAlert`
+
+Variantes:
+
+- info
+- success
+- warning
+- danger
+
+#### `Toast`
+
+Uso:
+
+- sucesso após envio
+- sucesso ao aprovar
+- erro operacional
+
+### Dados
+
+#### `DataTable`
+
+É um dos componentes centrais do sistema.
+
+Variantes:
+
+- com filtros externos
+- com paginação
+- com linha clicável
+- com ações por linha
+- estado vazio
+- estado de erro
+- loading com skeleton
+
+Observação:\
+como tabela é um padrão fortemente web, já vale prever uma versão de adaptação futura baseada em `cards de registro` para contextos menores ou mobile.
+
+#### `Pagination`
+
+Estados:
+
+- primeira página
+- intermediária
+- última página
+- desabilitada
+
+#### `DefinitionList`
+
+Uso:
+
+- detalhe da solicitação
+- dados administrativos
+- informações resumidas
+
+Variantes:
+
+- 1 coluna
+- 2 colunas
+- compacta
+
+#### `Timeline`
+
+Uso:
+
+- histórico de movimentações
+- status de aprovação
+
+Variantes:
+
+- simples
+- com comentários
+- com status
+- com responsável
+
+### Workflow
+
+#### `ApprovalActionBar`
+
+Uso:
+
+- ações de aprovar e reprovar
+
+Partes:
+
+- texto contextual
+- botão aprovar
+- botão reprovar
+- campo opcional de justificativa
+
+Estados:
+
+- disponível para ação
+- bloqueado
+- enviando
+- concluído
+
+#### `StickyFooterActions`
+
+Uso:
+
+- formulário principal
+
+Partes:
+
+- ação secundária
+- ação principal
+- resumo de erros, se necessário
+
+### Estados estruturais
+
+#### `EmptyState`
+
+Variantes sugeridas:
+
+- sem solicitações
+- sem resultados
+- sem configurações
+- sem histórico
+- sem anexos
+
+#### `ErrorState`
+
+Variantes sugeridas:
+
+- erro de listagem
+- erro de detalhe
+- erro de integração
+- erro de autenticação
+
+#### `LoadingState`
+
+Variantes:
+
+- page
+- section
+- table
+- form
+- detail
+
+## Página 03. Padrões
+
+Essa página reúne composições maiores, acima do nível de componente.
+
+## Padrões que vale montar
+
+### `AuthPageLayout`
+
+Estrutura:
+
+- área de marca
+- card central
+- mensagem contextual
+- rodapé simples
+
+### `ListPagePattern`
+
+Estrutura:
+
+- breadcrumb opcional
+- header com CTA
+- filtros
+- tabela
+- paginação
+
+### `DetailPagePattern`
+
+Estrutura:
+
+- breadcrumb
+- header
+- cards resumo
+- blocos de conteúdo
+- histórico
+- anexos
+- barra de aprovação
+
+### `FormPagePattern`
+
+Estrutura:
+
+- breadcrumb
+- header
+- seções de formulário
+- footer fixo com ações
+
+### `AdminPagePattern`
+
+Estrutura:
+
+- header
+- filtros
+- tabela ou lista
+- modal ou drawer para edição
+
+## Página 04. Telas
+
+Monte as telas finais aqui, já em nível de protótipo.
+
+## Frames sugeridos
+
+Se o portal for web embarcado, vale começar por:
+
+- `1440`
+- `1280`
+
+Se precisarem validar menor largura:
+
+- `1024`
+
+Como referência de evolução futura para app, também vale duplicar pelo menos as telas principais em uma largura reduzida:
+
+- `390` ou `428`
+
+## Organização dos frames
+
+Nomeie assim:
+
+- `Login / Default`
+- `Login / Error`
+- `Solicitações / Lista carregada`
+- `Solicitações / Empty`
+- `Solicitações / Error`
+- `Solicitação detalhe / Default`
+- `Solicitação detalhe / Aprovação habilitada`
+- `Solicitação detalhe / Sem permissão`
+- `Nova solicitação / Seleção`
+- `Aumento de quadro / Inicial`
+- `Aumento de quadro / Com erros`
+- `Aumento de quadro / Enviando`
+- `Admin parâmetros / Lista`
+- `Admin parâmetros / Modal edição`
+
+## Página 05. Fluxos
+
+Aqui entram os links de prototipação no Figma.
+
+## Fluxos que vale prototipar
+
+### Fluxo 1
+
+Login:
+
+- login default
+- erro de credencial
+- acesso autorizado
+
+### Fluxo 2
+
+Criação de solicitação:
+
+- listagem
+- nova solicitação
+- formulário
+- envio
+- detalhe
+
+### Fluxo 3
+
+Acompanhamento:
+
+- listagem filtrada
+- detalhe
+- histórico
+
+### Fluxo 4
+
+Aprovação:
+
+- detalhe com seção de aprovação
+- reprovação com justificativa
+- feedback de sucesso
+
+### Fluxo 5
+
+Administração:
+
+- listagem de configurações
+- criar RH central
+- editar RH central
+- remover RH central
+
+## Página 06. Playground
+
+Use para explorar:
+
+- variações rápidas
+- ideias descartadas
+- testes de densidade
+- alternativas de layout
+
+## Layout por tela
+
+## Login
+
+### Estrutura
+
+- área externa com fundo neutro ou institucional
+- card central com largura controlada
+- spacing vertical generoso
+
+### Observação futura para app
+
+O bloco central deve conseguir virar uma composição vertical simples, sem depender de margens laterais muito grandes.
+
+### Hierarquia
+
+1. Marca
+2. Título
+3. Descrição curta
+4. Campos
+5. CTA
+6. Feedback
+
+## Minhas Solicitações
+
+### Estrutura
+
+- header com CTA à direita
+- faixa de filtros abaixo do header
+- tabela ocupando o corpo principal
+
+### Observação futura para app
+
+A listagem deve ter versão possível em cards, porque tabelas largas não escalam bem para uma experiência mobile.
+
+### Hierarquia
+
+1. Título
+2. Nova solicitação
+3. Filtros
+4. Lista
+5. Paginação
+
+## Detalhe da solicitação
+
+### Estrutura
+
+- header contextual
+- grid de cards resumo
+- blocos de dados
+- timeline
+- anexos
+- aprovação
+
+### Sugestão de grid
+
+- 12 colunas
+- cards resumo em 3 ou 4 colunas
+- blocos principais em largura maior
+- sidebar opcional para ações, se quiserem destacar aprovação
+
+### Observação futura para app
+
+Evite depender de sidebar fixa na regra principal da tela. Se quiserem usar sidebar no web, tratem como variação de layout, não como única composição possível.
+
+## Formulário
+
+### Estrutura
+
+- header fixo ou estável
+- formulário em largura confortável
+- divisões por seção
+- rodapé fixo
+
+### Observação futura para app
+
+As seções do formulário devem empilhar naturalmente e funcionar bem em fluxo vertical único.
+
+### Hierarquia
+
+1. Contexto organizacional
+2. Dados da solicitação
+3. Justificativa
+4. Ações
+
+## Administração
+
+### Estrutura
+
+- header com ação de adicionar
+- tabela de configurações
+- modal ou drawer de edição
+
+### Observação futura para app
+
+Essa é a tela menos prioritária para adaptação mobile no curto prazo, então pode nascer mais orientada a desktop. Ainda assim, os formulários e blocos internos devem continuar reutilizáveis.
+
+## Estados para desenhar por tela
+
+Desenhe pelo menos estes estados nas telas principais.
+
+## Login
+
+- default
+- loading
+- erro de credencial
+- sem permissão
+
+## Listagem
+
+- carregada
+- vazia
+- sem resultados
+- erro
+- loading
+
+## Detalhe
+
+- carregado
+- loading
+- sem histórico
+- sem anexos
+- aprovação disponível
+- sem permissão de aprovação
+- erro
+
+## Formulário
+
+- inicial
+- preenchimento parcial
+- erro de campo
+- loading de selects dependentes
+- enviando
+- erro de integração
+
+## Administração
+
+- lista carregada
+- vazia
+- modal aberto
+- salvando
+- erro operacional
+
+## Tokens de produto recomendados
+
+Se quiser começar com naming mais organizado, pode usar:
+
+### Cor
+
+- `color.bg.canvas`
+- `color.bg.surface`
+- `color.bg.subtle`
+- `color.text.primary`
+- `color.text.secondary`
+- `color.text.inverse`
+- `color.border.default`
+- `color.border.strong`
+- `color.action.primary`
+- `color.action.primary.hover`
+- `color.action.danger`
+- `color.feedback.success.bg`
+- `color.feedback.success.text`
+- `color.feedback.warning.bg`
+- `color.feedback.warning.text`
+- `color.feedback.danger.bg`
+- `color.feedback.danger.text`
+
+### Espaçamento
+
+- `space.4`
+- `space.8`
+- `space.12`
+- `space.16`
+- `space.24`
+- `space.32`
+
+### Radius
+
+- `radius.sm`
+- `radius.md`
+- `radius.lg`
+- `radius.xl`
+
+### Shadow
+
+- `shadow.sm`
+- `shadow.md`
+- `shadow.lg`
+
+### Tipografia
+
+- `font.heading.l`
+- `font.heading.m`
+- `font.title.l`
+- `font.title.m`
+- `font.body.m`
+- `font.body.s`
+- `font.label.m`
+- `font.label.s`
+
+## Convenção de nomenclatura no Figma
+
+Para a biblioteca ficar limpa, sugiro:
+
+### Componentes
+
+`Componente / Variante / Estado`
+
+Exemplos:
+
+- `Button / Primary / Default`
+- `Button / Primary / Loading`
+- `StatusBadge / Approved / Default`
+- `TextField / Default / Error`
+- `PageHeader / WithDescription / WithCTA`
+
+### Frames
+
+`Tela / Cenário`
+
+Exemplos:
+
+- `Login / InvalidCredentials`
+- `Solicitações / Empty`
+- `Detalhe / ApprovalEnabled`
+- `Formulário / SubmitError`
+
+## Ordem prática de desenho
+
+Se você quiser ganhar velocidade, siga nesta ordem:
+
+1. Fundamentos
+2. Botões, inputs e badges
+3. `PageHeader`, `InfoCard`, `SectionCard`
+4. `DataTable`, `FilterBar`, `Pagination`
+5. `Timeline`, `ApprovalActionBar`, `EmptyState`, `ErrorState`
+6. Shell da aplicação
+7. Tela de login
+8. Tela de listagem
+9. Tela de formulário
+10. Tela de detalhe
+11. Tela administrativa
+12. Prototipação dos fluxos
+
+## Componentes mais críticos para o MVP
+
+Se tiver que priorizar sem desenhar tudo agora, foque em:
+
+1. `AppShell`
+2. `PageHeader`
+3. `Button`
+4. `TextField`
+5. `Select`
+6. `UserSearchSelect`
+7. `StatusBadge`
+8. `DataTable`
+9. `FormSection`
+10. `StickyFooterActions`
+11. `Timeline`
+12. `ApprovalActionBar`
+13. `InlineAlert`
+14. `EmptyState`
+15. `ErrorState`
+
+## Observações de produto para refletir no visual
+
+- O fluxo mais importante do MVP é abrir e acompanhar `Aumento de Quadro`
+- A listagem e o detalhe precisam destacar `status` com muita clareza
+- O formulário precisa parecer confiável, guiado e fácil de preencher
+- A aprovação deve transmitir segurança, rastreabilidade e responsabilidade
+- A área administrativa pode ter visual mais denso, mas não deve perder legibilidade
+- O produto deve parecer nativamente confortável no web desde o primeiro dia
+- A base visual deve permitir transição futura para app sem reconstrução completa da biblioteca

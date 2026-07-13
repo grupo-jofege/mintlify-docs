@@ -1,0 +1,91 @@
+---
+title: "Visão Geral do MVP — Requisições RH"
+description: "Resumo executivo do MVP, escopo, frentes e critérios de implantação."
+---
+
+## Objetivo do MVP
+
+O MVP do Portal de Requisição de RH deve viabilizar a abertura, acompanhamento e aprovação de solicitações de **Aumento de Quadro** por meio de um portal próprio, desacoplado da experiência nativa do RM e preparado para uso por gestores e cenários delegados.
+
+O objetivo desta fase não é resolver todos os tipos de requisição de RH. O foco é entregar um fluxo confiável, auditável e escalável para um primeiro tipo de solicitação, criando a base técnica e funcional para a evolução futura.
+
+## Escopo desta fase
+
+Entram no MVP:
+
+- autenticação e sessão no contexto definido para o portal
+- formulário de Aumento de Quadro
+- persistência da solicitação no portal
+- integração com a ACL para criação da solicitação no RM
+- abertura e acompanhamento do fluxo de aprovação
+- listagem e detalhe das solicitações
+- administração de RH Central e permissões
+- observabilidade mínima, logs e homologação
+
+Ficam fora do MVP:
+
+- novos tipos de solicitação além de Aumento de Quadro
+- motor de conteúdo dinâmico em Markdown em produção
+- administração editorial completa de páginas dinâmicas
+- expansão funcional para desligamento, transferência e outras jornadas
+
+## Frentes do projeto
+
+### Gerencial
+
+Responsável: **Lucas Camilo Dutra**
+
+Foco:
+
+- alinhamento de escopo
+- decisões funcionais
+- definição de fronteiras entre serviços
+- acompanhamento da execução
+- homologação e condução da entrega
+
+### Frontend
+
+Responsável: **Mackson Mesquita**
+
+Foco:
+
+- widget do Fluig
+- navegação do portal
+- formulários
+- listagem, detalhe e experiência de aprovação
+- interface administrativa
+- comportamento de sessão no cliente
+
+### Backend
+
+Responsáveis: **Guilherme Lourenço** e **Willian Augusto Ferreira**
+
+Foco:
+
+- API do Portal RH
+- integração com ACL e RM
+- contratos e payloads
+- persistência, rastreabilidade e idempotência
+- autenticação, sessão, logs e observabilidade
+
+## Critérios de aceite do MVP
+
+O MVP é considerado pronto quando atender, no mínimo, aos seguintes pontos:
+
+- o usuário consegue abrir uma solicitação de Aumento de Quadro no portal
+- a solicitação é persistida com `idPortal`
+- a integração com RM registra os identificadores necessários
+- o fluxo de aprovação é iniciado e o status fica visível no portal
+- a listagem e o detalhe apresentam os dados essenciais da solicitação
+- o cenário delegado é suportado conforme regra definida
+- o portal diferencia acesso comum e acesso administrativo
+- a solução possui trilha mínima de auditoria, logs e tratamento de falha
+
+## Documentos relacionados
+
+- [Especificação funcional inicial](/levantamento-reuniao)
+- [Mapa de telas](/map)
+- [Guia para Figma](/figm)
+- [Stack e arquitetura Flutter](/stack-arquitetura-flutter-portal-rh)
+- [Arquitetura de integração Portal RH, ACL e RM](/arquitetura-integracao-portal-rh)
+- [Backlog por frente e responsáveis](/backlog-frentes-responsaveis-rh)

@@ -1,0 +1,551 @@
+---
+title: "Mapa de Telas — Portal de Requisição de RH"
+---
+
+Documento de apoio para criação de interface e componentes do design system do Portal de Requisição de RH.
+
+## Visão geral das rotas
+
+```text
+/login
+
+/portal
+  /solicitacoes
+  /solicitacoes/:id
+  /nova-solicitacao
+  /nova-solicitacao/aumento-de-quadro
+
+/admin
+  /admin/parametros
+```
+
+## Fluxo principal
+
+1. Usuário acessa `/login`
+2. Após autenticar, entra em `/portal/solicitacoes`
+3. Pode abrir `/portal/nova-solicitacao`
+4. Seleciona `/portal/nova-solicitacao/aumento-de-quadro`
+5. Envia a solicitação
+6. É redirecionado para `/portal/solicitacoes/:id`
+7. Depois acompanha status na listagem e no detalhe
+
+## Estrutura base da aplicação
+
+### Shell pública
+
+Usada na rota `/login`.
+
+Componentes:
+
+- `AuthPageLayout`
+- `BrandBlock`
+- `AuthCard`
+- `Input`
+- `PasswordInput`
+- `Button`
+- `InlineAlert`
+
+### Shell autenticada
+
+Usada nas rotas dentro de `/portal` e `/admin`.
+
+Componentes:
+
+- `AppShell`
+- `TopBar`
+- `PageHeader`
+- `Sidebar` ou `NavigationRail`
+- `Breadcrumb`
+- `ContentContainer`
+- `UserMenu`
+- `StatusBanner`
+
+### Padrões reutilizáveis
+
+Componentes que valem a pena existir desde o início:
+
+- `StatusBadge`
+- `InfoCard`
+- `DefinitionList`
+- `FilterBar`
+- `DataTable`
+- `EmptyState`
+- `ErrorState`
+- `LoadingState`
+- `Timeline`
+- `ApprovalActionBar`
+- `SectionCard`
+- `FormSection`
+- `StickyFooterActions`
+- `ConfirmDialog`
+- `TextareaWithCounter`
+- `UserSearchSelect`
+- `EntitySelect`
+
+## Tela de login
+
+### Rota
+
+`/login`
+
+### Objetivo
+
+Autenticar o usuário com credenciais do TOTVS RM e validar se ele possui acesso ao portal.
+
+### O que a tela deve ter
+
+- Identidade visual do portal
+- Título da tela
+- Texto curto explicando que o acesso usa credenciais do RM
+- Campo de usuário
+- Campo de senha
+- Ação principal para entrar
+- Mensagem de erro para credenciais inválidas
+- Mensagem de acesso negado para usuário autenticado sem permissão
+- Estado de carregamento no botão
+
+### Componentes sugeridos
+
+- `AuthCard`
+- `Logo`
+- `Heading`
+- `Text`
+- `TextField`
+- `PasswordField`
+- `PrimaryButton`
+- `InlineAlert`
+- `LinkButton` para ajuda ou suporte, se fizer sentido
+
+### Blocos da interface
+
+- Cabeçalho visual com marca e nome do produto
+- Card central de autenticação
+- Área de feedback de erro
+- Rodapé simples com versão ou texto institucional opcional
+
+### Estados
+
+- Inicial
+- Carregando autenticação
+- Credenciais inválidas
+- Usuário sem permissão
+- Indisponibilidade do serviço
+
+### Notas de design
+
+- A hierarquia deve ser simples e direta
+- A tela precisa transmitir segurança e clareza
+- Evitar excesso de elementos secundários
+
+## Tela de minhas solicitações
+
+### Rota
+
+`/portal/solicitacoes`
+
+### Objetivo
+
+Permitir que o usuário visualize, filtre e acompanhe todas as solicitações que criou ou que foram abertas em seu nome.
+
+### O que a tela deve ter
+
+- Cabeçalho com título da página
+- Botão de nova solicitação
+- Resumo rápido com contadores por status, se desejarem
+- Barra de filtros
+- Campo de busca opcional
+- Tabela ou lista de solicitações
+- Paginação
+- Estado vazio
+- Estado de erro
+
+### Componentes sugeridos
+
+- `PageHeader`
+- `PrimaryButton`
+- `SummaryCards`
+- `FilterBar`
+- `Select`
+- `DateRangePicker`
+- `SearchField`
+- `DataTable`
+- `StatusBadge`
+- `Pagination`
+- `EmptyState`
+- `ErrorState`
+
+### Colunas sugeridas
+
+- Número da solicitação
+- Tipo
+- Requisitante real
+- Criado por
+- Empresa ou filial
+- Data de criação
+- Última atualização
+- Status
+- Ações
+
+### Ações por item
+
+- Ver detalhe
+- Continuar acompanhamento
+- Reenviar, apenas se houver falha controlada
+
+### Estados
+
+- Lista carregada
+- Sem resultados para o filtro
+- Sem solicitações cadastradas
+- Erro ao carregar
+- Atualização em andamento
+
+### Notas de design
+
+- O status deve ser o elemento visual mais fácil de escanear
+- Filtros precisam ficar acima da listagem e ter leitura rápida
+- Ação principal da página é `Nova solicitação`
+
+## Tela de detalhe da solicitação
+
+### Rota
+
+`/portal/solicitacoes/:id`
+
+### Objetivo
+
+Mostrar todos os dados da solicitação, o andamento do fluxo, o histórico e as ações de aprovação quando o usuário estiver na alçada correta.
+
+### O que a tela deve ter
+
+- Breadcrumb
+- Cabeçalho com identificadores e status
+- Cards de resumo
+- Seção com dados da solicitação
+- Seção com histórico de movimentações
+- Seção de anexos
+- Seção de aprovação condicional
+- Feedback de sucesso ou erro após ações
+
+### Componentes sugeridos
+
+- `Breadcrumb`
+- `PageHeader`
+- `StatusBadge`
+- `InfoCard`
+- `DefinitionList`
+- `Timeline`
+- `AttachmentList`
+- `ApprovalActionBar`
+- `Textarea`
+- `ConfirmDialog`
+- `Toast`
+
+### Estrutura sugerida
+
+#### Bloco 1
+
+Resumo da solicitação:
+
+- Número interno do portal
+- Número da requisição no RM
+- Tipo da solicitação
+- Status atual
+- Data de criação
+
+#### Bloco 2
+
+Dados enviados no formulário:
+
+- Empresa
+- Filial
+- Seção
+- Função
+- Requisitante real
+- Criador da solicitação
+- Quantidade de vagas
+- Obra ou projeto
+- Previsão de início
+- Justificativa
+- Observações
+
+#### Bloco 3
+
+Andamento do fluxo:
+
+- Etapa atual
+- Responsável atual
+- Última atualização
+- Histórico de comentários e movimentações
+
+#### Bloco 4
+
+Anexos:
+
+- Nome do arquivo
+- Tipo
+- Data
+- Ação de visualizar ou baixar
+
+#### Bloco 5
+
+Aprovação, exibida apenas quando aplicável:
+
+- Botão `Aprovar`
+- Botão `Reprovar`
+- Campo de justificativa para reprovação
+- Confirmação de ação
+
+### Estados
+
+- Carregando detalhe
+- Solicitação carregada
+- Sem histórico disponível
+- Sem anexos
+- Usuário sem permissão para aprovar
+- Erro ao carregar
+- Ação executada com sucesso
+- Falha ao aprovar ou reprovar
+
+### Notas de design
+
+- A leitura precisa ser boa mesmo com muitos dados
+- Vale usar cards ou accordions para separar blocos
+- Essa tela deve nascer como padrão reutilizável de workflow
+
+## Tela de nova solicitação
+
+### Rota
+
+`/portal/nova-solicitacao`
+
+### Objetivo
+
+Servir como ponto de entrada para abertura de novas solicitações. No MVP, terá apenas Aumento de Quadro.
+
+### O que a tela deve ter
+
+- Cabeçalho da página
+- Texto curto orientando a escolha
+- Card de tipo de solicitação disponível
+- Estado preparado para expansão futura
+
+### Componentes sugeridos
+
+- `PageHeader`
+- `Text`
+- `SelectionCard`
+- `CardGrid`
+- `Tag`
+
+### Conteúdo do card
+
+- Nome do tipo
+- Descrição curta
+- Indicador de disponibilidade
+- CTA para continuar
+
+### Estados
+
+- Um tipo disponível
+- Tipos indisponíveis em breve
+
+### Notas de design
+
+- Mesmo com um card só, a tela deve parecer preparada para crescer
+- O componente do card já deve suportar múltiplos tipos na Fase 2
+
+## Tela de formulário de aumento de quadro
+
+### Rota
+
+`/portal/nova-solicitacao/aumento-de-quadro`
+
+### Objetivo
+
+Capturar os dados necessários para abrir a solicitação de aumento de quadro com validação, persistência e envio ao RM.
+
+### O que a tela deve ter
+
+- Cabeçalho com título e descrição
+- Indicador de progresso, se fizer sentido
+- Formulário dividido em seções
+- Validação inline
+- Rodapé fixo com ações
+- Feedback de envio
+
+### Componentes sugeridos
+
+- `PageHeader`
+- `FormSection`
+- `Select`
+- `Autocomplete`
+- `UserSearchSelect`
+- `NumberField`
+- `DatePicker`
+- `Textarea`
+- `HelperText`
+- `InlineError`
+- `StickyFooterActions`
+- `PrimaryButton`
+- `SecondaryButton`
+- `UnsavedChangesDialog`
+
+### Estrutura sugerida do formulário
+
+#### Seção 1
+
+Contexto organizacional:
+
+- Empresa ou coligada
+- Filial
+- Seção ou departamento
+- Função
+
+#### Seção 2
+
+Dados da solicitação:
+
+- Requisitante real
+- Obra ou projeto
+- Quantidade de vagas
+- Previsão de início
+
+#### Seção 3
+
+Justificativa:
+
+- Justificativa principal
+- Observações adicionais
+
+### Regras visuais importantes
+
+- Campos dependentes devem exibir bloqueio ou skeleton até a seleção anterior
+- Campos obrigatórios precisam ter indicação clara
+- Mensagens de erro devem ser específicas
+- O botão de envio deve ficar desabilitado enquanto houver inconsistências obrigatórias
+
+### Ações da tela
+
+- Salvar rascunho, se isso entrar na implementação
+- Cancelar
+- Enviar solicitação
+
+### Estados
+
+- Inicial
+- Carregando listas do RM
+- Campo inválido
+- Envio em andamento
+- Sucesso no envio
+- Falha de integração com possibilidade de reenvio
+
+### Notas de design
+
+- Essa é a tela mais importante do MVP
+- A experiência deve reduzir fricção e erro de preenchimento
+- O formulário precisa funcionar bem com muita interação entre campos dependentes
+
+## Tela de administração de parâmetros
+
+### Rota
+
+`/admin/parametros`
+
+### Objetivo
+
+Permitir que administradores configurem o RH Central e regras operacionais sem depender de alteração de código.
+
+### O que a tela deve ter
+
+- Cabeçalho com contexto administrativo
+- Lista de configurações existentes
+- Ação para adicionar nova configuração
+- Ação para editar e remover
+- Filtros por empresa ou contexto, se necessário
+
+### Componentes sugeridos
+
+- `PageHeader`
+- `DataTable` ou `CardList`
+- `PrimaryButton`
+- `DrawerForm` ou `ModalForm`
+- `Select`
+- `UserSearchSelect`
+- `ConfirmDialog`
+- `EmptyState`
+
+### Campos sugeridos da configuração
+
+- Empresa
+- Filial ou contexto
+- RH Central responsável
+- Status da configuração
+- Datas de vigência, se fizer sentido
+
+### Estados
+
+- Lista carregada
+- Sem configurações
+- Criando configuração
+- Editando configuração
+- Excluindo configuração
+- Erro operacional
+
+### Notas de design
+
+- Como é uma tela administrativa, pode ter densidade maior de informação
+- Vale usar modal ou drawer para edição rápida
+
+## Perfis e visibilidade
+
+| Tela | Gestor | Assistente | Aprovador | RH Central | Admin |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `/login` | Sim | Sim | Sim | Sim | Sim |
+| `/portal/solicitacoes` | Sim | Sim | Sim | Sim | Sim |
+| `/portal/solicitacoes/:id` | Sim | Sim | Sim | Sim | Sim |
+| Ações de aprovação dentro do detalhe | Não | Não | Sim | Sim | Sim |
+| `/portal/nova-solicitacao` | Sim | Sim | Não | Sim | Sim |
+| `/portal/nova-solicitacao/aumento-de-quadro` | Sim | Sim | Não | Sim | Sim |
+| `/admin/parametros` | Não | Não | Não | Não | Sim |
+
+## Estados globais
+
+Esses estados precisam existir como padrão visual do produto:
+
+- `Loading`
+- `Empty`
+- `Error`
+- `Success`
+- `Disabled`
+- `Read only`
+- `No permission`
+- `Offline` ou indisponibilidade temporária, se desejarem tratar
+
+## Componentes prioritários do design system
+
+Se você quiser montar a biblioteca em ordem de impacto, eu priorizaria:
+
+1. `AppShell`
+2. `PageHeader`
+3. `StatusBadge`
+4. `DataTable`
+5. `FilterBar`
+6. `FormSection`
+7. `Select` e `Autocomplete`
+8. `UserSearchSelect`
+9. `Timeline`
+10. `ApprovalActionBar`
+11. `EmptyState`
+12. `ErrorState`
+13. `StickyFooterActions`
+14. `ConfirmDialog`
+
+## Observações para Fase 2
+
+Vale já prever no design:
+
+- tela de seleção com múltiplos tipos de solicitação
+- componentes de páginas dinâmicas em Markdown
+- tela administrativa para cadastro de templates ou páginas
+- reuso do módulo de detalhe e aprovação para outros fluxos

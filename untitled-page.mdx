@@ -1,0 +1,310 @@
+---
+title: "Documentação de Reunião — Portal de Requisição de RH"
+---
+
+## 1. Contexto da Reunião
+
+- **Data:** 25 de junho de 2026
+- **Horário de início:** 13:05 (duração aproximada: 1h 15min)
+- **Objetivo principal:** Apresentar e alinhar o escopo, arquitetura técnica e próximos passos do **Portal de Requisição de RH** — sistema que centralizará solicitações de RH para gestores internos e externos, substituindo o fluxo nativo do TOTVS RM que não suporta gestores PJ/externos.
+
+### Participantes
+
+| Nome | Papel |
+| :-- | :-- |
+| **Igor Monte** | Arquiteto / Tech Lead — conduziu a reunião |
+| **Lucas Camilo Dutra** | Gerente do projeto |
+| **Mackson da Rocha Mesquita** | Desenvolvedor Front-end |
+| **Willian Augusto Ferreira** | Desenvolvedor Back-end / Integrações |
+| Guilherme Lourenço | Desenvolvedor Back-end / Integrações |
+
+---
+
+Repositório ACL - [https://github.com/grupo-jofege/JFGAPI-JV-RMTICKET-01](https://github.com/grupo-jofege/JFGAPI-JV-RMTICKET-01)
+
+## 2. Pauta e Discussão
+
+### 2.1 Contexto do Problema
+
+- O **Portal Meu RH da TOTVS** suporta apenas gestores CLT vinculados a uma **chapa** no RM. Gestores externos ou PJs ficam fora desse fluxo.
+- Como consequência, solicitações como **aumento de quadro, promoção, transferência, demissão** não podem ser abertas por esses gestores no portal nativo.
+- A solução é construir um **portal próprio** integrado ao TOTVS via API, que ofereça essa funcionalidade de forma centralizada.
+
+### 2.2 Escopo do Sistema
+
+O projeto foi dividido em **duas fases**:
+
+- **Fase 1 (MVP — 1 mês):** Foco exclusivo em **Aumento de Quadro** (solicitação de contratação de novos colaboradores), incluindo formulário, acompanhamento de status e aprovação.
+- **Fase 2 (Evolução):** Inclusão de outros tipos de requisição (aumento de salário, promoção, transferência, demissão, férias) e implementação do **Motor de Markdown** para customização dinâmica de telas.
+
+### 2.3 Fluxos de Aprovação
+
+Foram identificados **dois fluxos distintos**:
+
+1. **Fluxo Gestor Direto:** O próprio gestor cria a solicitação → aprovação segue direto para o RH.
+2. **Fluxo Delegado:** Um assistente/funcionário cria a solicitação em nome de um gestor (ex.: Ronailson em nome do Alexandre Pio) → a solicitação passa por uma **etapa adicional de aprovação do gestor** antes de chegar ao RH.
+
+Ambos os fluxos são processados via **"Minhas Aprovações"** do TOTVS (sistema de workflow), gerenciado pelo time de Sistemas.
+
+### 2.4 Autenticação
+
+- Não será possível reaproveitar o login do Fluig diretamente, pois a API do RM exige autenticação própria com **usuário e senha do TOTVS**.
+- Será necessária uma **tela de login dedicada**, com credenciais do RM.
+- A gestão de acessos no RM ficará sob responsabilidade do time de **Sistemas**.
+
+### 2.5 Motor de Markdown (Fase 2)
+
+- Igor propôs um mecanismo onde um **template em Markdown** seria armazenado em banco NoSQL (ex.: MongoDB) e processado dinamicamente pelo portal.
+- Isso permitiria ao time de Sistemas customizar os campos exibidos na tela de aprovação **sem necessidade de alteração de código**.
+- O grupo discutiu alternativas (HTML, banco relacional) e concluiu que o Markdown é adequado pela simplicidade de edição e pela ampla disponibilidade de bibliotecas de renderização.
+- **Willian** sugeriu criar uma tela de cadastro de templates para centralizar validações.
+
+### 2.6 Arquitetura de APIs
+
+- Serão **duas APIs separadas**:
+  - **API ACL (Anti-Corruption Layer):** camada de integração com o TOTVS RM (já parcialmente desenvolvida por Igor).
+  - **API do Portal de Requisições de RH:** lógica de negócio própria do portal.
+- A separação foi justificada pela reusabilidade: a camada de tickets/aprovações será compartilhada com o projeto de Solicitações de Obras.
+
+### 2.7 Banco de Dados
+
+- Dados de solicitações: **TOTVS RM** como fonte principal.
+- Templates de Markdown (Fase 2): banco **NoSQL** (MongoDB ou Redis), para evitar estrutura relacional complexa na serialização de templates.
+
+---
+
+## 3. Decisões Tomadas
+
+- ✅ **Nomenclatura do projeto:** "Portal de Requisição de RH" (nome provisório; sugestões futuras são bem-vindas).
+- ✅ **Fase 1 tem prazo de 1 mês** a partir de 22/06/2026 (previsão: 10/08/2026), focando exclusivamente em Aumento de Quadro.
+- ✅ **Motor de Markdown é Fase 2** — não entra no MVP.
+- ✅ **Frontend em Flutter** — decisão inclinada para Flutter por consistência com os demais projetos mobile (possível evolução futura para app). React permanece como alternativa caso o suporte a Markdown no Flutter se mostre inadequado.
+- ✅ **Tela de login dedicada** será criada (sem SSO com Fluig/AD no momento).
+- ✅ **Arquitetura de microsserviços** com duas APIs separadas (ACL \+ Portal RH), orquestradas via Gateway.
+- ✅ **Controle de acesso** ficará com o time de Sistemas (criação/gestão de usuários no RM).
+- ✅ **Banco NoSQL** para templates Markdown na Fase 2.
+- ✅ **Figma** será usado para prototipação — acesso já disponível no Keeper.
+- ✅ **Documentação e tarefas** centralizadas no **Asana** (projeto "Portal de Requisição").
+- ✅ **Bruna** (consultora de RH da CRM) será referência para dúvidas do contexto de negócio e validação de campos.
+
+---
+
+## 4. Próximos Passos (Action Items)
+
+| # | Tarefa | Responsável | Observação |
+| :-- | :-- | :-- | :-- |
+| 1 | Estudar e validar suporte a Markdown no Flutter | **Lucas / Mackson** | Definição final de stack depende deste estudo |
+| 2 | Criar protótipo de telas no Figma (login, formulário, acompanhamento) | **Lucas \+ Mackson** | Colaboração conjunta |
+| 3 | Desenvolver a camada ACL de integração com TOTVS RM | **Willian** | Base já iniciada por Igor |
+| 4 | Desenvolver o front-end do portal (telas da Fase 1) | **Mackson** | Aguarda definição de stack |
+| 5 | Elaborar proposta de arquitetura detalhada (módulos, APIs, banco) | **Willian / Mackson / Lucas** | Apresentar para Igor antes de iniciar dev |
+| 6 | Compartilhar documentação técnica e link do Asana com o time | **Igor** | Doc já na Asana; Igor enviará link |
+| 7 | Assistir à gravação da call com Bruna (consultora RM) | **Willian / Mackson** | Igor irá localizar e compartilhar a gravação |
+| 8 | Agendar próxima reunião de acompanhamento (após protótipos) | **Lucas** | Calls periódicas conforme evolução |
+| 9 | Avaliar viabilidade de sincronização de senhas RM com AD | **Time de Sistemas** | Gap de autenticação identificado; Igor já tentou sem sucesso |
+
+---
+
+## 5. Stack Técnica Definida
+
+### 5.1 Front-end
+
+| Tecnologia | Finalidade |
+| :-- | :-- |
+| **Flutter** _(preferencial)_ | Framework principal para o portal web (widget embarcado no Fluig) com possibilidade de evolução para app mobile |
+| **React** _(alternativa)_ | Avaliar caso o suporte a Markdown no Flutter se mostre insuficiente |
+| **Figma** | Prototipação de telas |
+| **IPOUI / MUI** | Referência de componentes (a definir) |
+
+### 5.2 Back-end / Integrações
+
+| Tecnologia | Finalidade |
+| :-- | :-- |
+| **API ACL (Anti-Corruption Layer)** | Camada de isolamento e integração com TOTVS RM |
+| **API Portal RH** | Lógica de negócio própria do portal |
+| **TOTVS RM (REST API)** | ERP — fonte dos dados de requisições, atendimentos e aprovações |
+| **Kong API Gateway** | Orquestração e roteamento entre microsserviços |
+| **"Minhas Aprovações" TOTVS** | Workflow de aprovações (integrado via API pelo Willian) |
+
+### 5.3 Banco de Dados
+
+| Tecnologia | Finalidade |
+| :-- | :-- |
+| **TOTVS RM (SQL Server)** | Fonte principal de dados de RH e requisições |
+| **MongoDB / Redis** _(Fase 2)_ | Armazenamento de templates Markdown para conteúdo dinâmico |
+
+### 5.4 Plataforma
+
+| Tecnologia | Finalidade |
+| :-- | :-- |
+| **Fluig (TOTVS)** | Plataforma host — portal embutido como widget |
+| **Asana** | Gerenciamento de tarefas e backlog do projeto |
+
+---
+
+## 6. Mapa de Telas e Rotas (Fase 1)
+
+### 6.1 Visão Geral das Rotas
+
+```text
+/login
+/portal
+  ├── /solicitacoes              → Lista de solicitações do usuário
+  │     └── /:id                → Detalhe + aprovação de uma solicitação
+  └── /nova-solicitacao
+        └── /aumento-de-quadro  → Formulário de Aumento de Quadro
+
+/admin (restrito a Administradores)
+  └── /parametros               → Configuração de RH Central e permissões
+```
+
+---
+
+### 6.2 Detalhamento por Tela
+
+---
+
+#### 🔐 Tela: Login
+
+**Rota:** `/login`
+
+**Objetivo:** Autenticar o usuário diretamente no TOTVS RM (credenciais próprias do RM, sem SSO com AD ou Fluig).
+
+**Elementos:**
+
+- Campo de **usuário** (login RM)
+- Campo de **senha**
+- Botão "Entrar"
+- Mensagem de erro em caso de credenciais inválidas
+
+**Comportamento:**
+
+- Após autenticação bem-sucedida, redireciona para `/portal/solicitacoes`
+- Token de sessão do RM armazenado em memória (sem localStorage)
+- Usuários sem permissão no portal recebem mensagem de acesso negado
+
+---
+
+#### 📋 Tela: Minhas Solicitações (Listagem)
+
+**Rota:** `/portal/solicitacoes`
+
+**Objetivo:** Exibir todas as solicitações criadas pelo usuário logado (ou em seu nome), com status atualizado do TOTVS.
+
+**Elementos:**
+
+- Tabela/lista com colunas: **Nº da Solicitação**, **Tipo**, **Requisitante Real**, **Data de Criação**, **Status** (badge colorido)
+- **Filtros:** por status (Em andamento / Aprovado / Cancelado / Concluído), por período, por empresa/filial
+- **Botão "Nova Solicitação"** → redireciona para `/portal/nova-solicitacao`
+- Paginação
+
+**Comportamento:**
+
+- Status consultado em tempo real via API ACL → "Minhas Aprovações" do RM
+- Solicitações criadas _em nome_ de outros também são exibidas, com indicação do criador e do requisitante real
+
+---
+
+#### 🔍 Tela: Detalhe da Solicitação \+ Aprovação
+
+**Rota:** `/portal/solicitacoes/:id`
+
+**Objetivo:** Exibir todos os dados de uma solicitação específica, o histórico de movimentações e — quando aplicável ao perfil do usuário — permitir **aprovar ou reprovar**.
+
+**Elementos:**
+
+- **Cabeçalho:** Nº da solicitação (portal e RM), tipo, data de criação, status atual
+- **Dados do formulário:** empresa, filial, seção, função, requisitante real, quantidade de vagas, obra/projeto, previsão de início, justificativa
+- **Histórico de movimentações:** etapa, responsável atual, data, comentários
+- **Anexos** vinculados ao atendimento no RM
+- **Seção de Aprovação** _(visível apenas para aprovadores na alçada)_:
+  - Botão "Aprovar"
+  - Botão "Reprovar" (com campo de justificativa obrigatório)
+
+**Comportamento:**
+
+- Dados carregados via API ACL (endpoint de detalhe do atendimento)
+- A seção de aprovação é exibida condicionalmente com base no perfil do usuário e na etapa atual do fluxo
+- Aprovação/reprovação avança a etapa no "Minhas Aprovações" via API
+
+> 💡 **Nota de modularização:** Esta tela deve ser desenvolvida como **módulo reutilizável**, pois o mesmo padrão de aprovação será utilizado em projetos futuros (ex.: Solicitações de Obras).
+
+---
+
+#### ➕ Tela: Nova Solicitação (Seleção de Tipo)
+
+**Rota:** `/portal/nova-solicitacao`
+
+**Objetivo:** Ponto de entrada para criação de uma nova solicitação. Na Fase 1, direciona diretamente para o formulário de Aumento de Quadro.
+
+**Elementos:**
+
+- Card ou botão "**Aumento de Quadro**" → redireciona para `/portal/nova-solicitacao/aumento-de-quadro`
+- _(Fase 2: outros tipos de requisição aparecerão aqui como novos cards)_
+
+---
+
+#### 📝 Tela: Formulário de Aumento de Quadro
+
+**Rota:** `/portal/nova-solicitacao/aumento-de-quadro`
+
+**Objetivo:** Capturar todos os dados necessários para abrir uma solicitação de Aumento de Quadro no TOTVS RM.
+
+**Campos do formulário:**
+
+| Campo | Tipo | Obrigatório |
+| :-- | :-- | :-- |
+| **Empresa / Coligada** | Select (lista do RM) | ✅ |
+| **Filial** | Select (filtrado por empresa) | ✅ |
+| **Seção / Departamento** | Select (filtrado por filial) | ✅ |
+| **Função** | Select (lista de funções do RM) | ✅ |
+| **Requisitante Real** | Select/busca de usuários | ✅ |
+| **Obra / Projeto** | Select ou texto | ✅ (quando aplicável) |
+| **Quantidade de Vagas** | Número inteiro positivo | ✅ |
+| **Previsão de Início** | Date picker (≥ hoje) | ✅ |
+| **Justificativa** | Textarea | ✅ |
+| **Observações** | Textarea | ❌ |
+
+**Comportamento:**
+
+- Validação em tempo real dos campos obrigatórios antes do envio
+- Ao submeter:
+  1. Portal persiste a solicitação localmente com um `idPortal`
+  2. API ACL cria a requisição no RM usando o **RH Central** como requisitante técnico
+  3. API ACL abre o atendimento/fluxo no "Minhas Aprovações"
+  4. Portal registra os identificadores retornados pelo RM (`idRmRequisicao`, `idRmAtendimento`)
+  5. Usuário é redirecionado para `/portal/solicitacoes/:id`
+- Em caso de falha na integração: exibe mensagem de erro clara, mantém solicitação com status "Falha ao enviar" e permite reenvio
+
+---
+
+#### ⚙️ Tela: Administração / Parâmetros
+
+**Rota:** `/admin/parametros`\
+**Perfil:** Somente **Administradores**
+
+**Objetivo:** Permitir configuração do **RH Central** (requisitante técnico) e gerenciamento de permissões, sem necessidade de alteração de código.
+
+**Elementos:**
+
+- Lista de **usuários RH Central** configurados (por empresa/contexto)
+- Botões para adicionar/editar/remover entradas
+- _(Fase 2: gerenciamento de páginas Markdown)_
+
+---
+
+### 6.3 Perfis de Acesso por Tela
+
+| Tela | Gestor Requisitante | Assistente/Delegado | Aprovador | RH Central | Administrador |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| Login | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Minhas Solicitações | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Detalhe da Solicitação | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Aprovação (ação) | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Nova Solicitação | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Formulário Aumento de Quadro | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Admin / Parâmetros | ❌ | ❌ | ❌ | ❌ | ✅ |
+
+---
+
+_Documento gerado em 26/06/2026 com base na transcrição da reunião de 25/06/2026._

@@ -1,0 +1,189 @@
+---
+title: "Reunião 2026-07-07 — Requisições RH"
+description: "Registro das definições, responsáveis e pendências alinhadas na reunião do projeto Requisições RH."
+---
+
+## Resumo da reunião
+
+Nesta reunião foram alinhadas as definições técnicas e operacionais para início do MVP do `Requisições RH`, com destaque para autenticação via `JofegeLogin`, uso da ACL no fluxo de aprovação, início do frontend e necessidade de vínculo entre aprovação e processo de **Aumento de Quadro** no RM.
+
+Também foi definido que o projeto terá um renderizador de `Markdown` vinculado ao processo, permitindo montar conteúdo dinâmico na tela de detalhe do ticket/aprovação a partir de dados de banco e outras fontes.
+
+## Objetivo
+
+Registrar as definições alinhadas na reunião, os responsáveis por cada frente e os pontos que ficaram pendentes para validação.
+
+---
+
+# Definições da reunião
+
+## 1. Autenticação
+
+Foi definido que a autenticação não ficará dentro do Portal RH nem da ACL.
+
+A solução será:
+
+- criar uma nova rota na API de login `JofegeLogin`
+- essa rota será responsável pelo fluxo de autenticação necessário para o projeto
+
+### Responsável
+
+- **Guilherme Lourenço**
+
+### Observações
+
+- confirmar se o repositório informado da API de login é o mais atual
+- definir o contrato da nova rota para consumo do frontend
+
+---
+
+## 2. ACL
+
+A ACL será usada como base para integração com o processo de aprovação e com os fluxos do RM.
+
+Foi definido que:
+
+- serão feitos testes na ACL para validar o que já está funcionando
+- será levantado o que ainda falta para atender o projeto
+- será criada uma collection da ACL a partir do Swagger
+
+### Responsável
+
+- **Willian Augusto Ferreira**
+
+### Observações
+
+- a collection deve facilitar homologação, desenvolvimento e troubleshooting
+
+---
+
+## 3. Frontend
+
+Foi definido que o frontend já pode iniciar.
+
+Atividades definidas:
+
+- criar o repositório GitHub do frontend
+- dar start no frontend
+- seguir a documentação da stack como base estrutural
+
+### Responsável
+
+- **Mackson Mesquita**
+
+### Observações
+
+- a base deve seguir a arquitetura definida no documento de stack
+- a organização deve seguir o padrão `feature-first`
+
+---
+
+## 4. Aprovação \+ Aumento de Quadro no RM
+
+Foi definido que haverá uma etapa específica ligada ao processo de **Aumento de Quadro** no RM.
+
+Fluxo esperado:
+
+1. a aprovação será iniciada pela ACL
+2. ao iniciar a aprovação, também será necessário iniciar a parte de **Aumento de Quadro** no RM
+3. será necessário manter o vínculo entre essas duas informações
+
+### Recomendação técnica
+
+Manter esse vínculo no backend do Portal RH por meio de persistência própria.
+
+Exemplo de vínculo:
+
+- `idPortal`
+- `idTicketRm`
+- `idAumentoQuadroRm`
+- `tipoSolicitacao`
+- `statusPortal`
+- `statusRm`
+- `createdAt`
+- `updatedAt`
+
+### Motivo
+
+Essa abordagem melhora:
+
+- rastreabilidade
+- auditoria
+- troubleshooting
+- segurança na integração
+
+---
+
+## 5. Renderizador de Markdown vinculado ao processo
+
+Também foi definido que haverá um **renderizador de Markdown** associado ao processo.
+
+Esse renderizador:
+
+- será salvo em banco
+- será vinculado ao tipo de processo, como `Aumento de Quadro`
+- poderá consumir consultas SQL e outras fontes
+- montará um `.md`
+- renderizará esse conteúdo na tela de detalhe do ticket/aprovação
+
+### Objetivo
+
+Permitir que o usuário visualize, no detalhe da aprovação, um resumo dinâmico e contextual do processo.
+
+### Benefícios
+
+- melhora a experiência de aprovação
+- reduz necessidade de consultar fontes externas
+- facilita evolução para outros processos
+
+---
+
+# Pendências
+
+Ficou pendente verificar:
+
+- com **Michel**, qual servidor mais estável e qual base homolog do RM deve ser usada
+- de onde buscar a hierarquia do solicitante
+- como criar um workflow de aprovações no RM/TOTVS
+
+---
+
+# Responsáveis consolidados
+
+## Gerencial
+
+- **Lucas Camilo Dutra**
+
+## Frontend
+
+- **Mackson Mesquita**
+
+## Backend
+
+- **Guilherme Lourenço**
+- **Willian Augusto Ferreira**
+
+---
+
+# Ações geradas a partir da reunião
+
+## Backend
+
+- criar nova rota de autenticação na API `JofegeLogin`
+- confirmar repositório mais atual da API de login
+- testar ACL e levantar gaps
+- gerar collection da ACL a partir do Swagger
+- iniciar etapa de Aumento de Quadro no RM ao abrir aprovação via ACL
+- persistir vínculo entre ticket/aprovação e processo de Aumento de Quadro no RM
+- estruturar renderizador de Markdown vinculado ao processo
+
+## Frontend
+
+- criar repositório GitHub do frontend
+- iniciar a base do frontend conforme documentação da stack
+
+## Gerencial
+
+- validar com Michel a base e servidor de homolog do RM
+- definir origem da hierarquia do solicitante
+- entender como criar workflow de aprovações no RM/TOTVS

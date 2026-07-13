@@ -1,0 +1,125 @@
+---
+title: "Projeto — Requisições RH"
+description: "Visão geral do projeto Requisições RH, objetivo, escopo resumido, frentes e links centrais."
+---
+
+## Resumo geral
+
+O `Requisições RH` é o projeto que vai centralizar a abertura, acompanhamento e aprovação de solicitações de RH em uma experiência própria, integrada ao ecossistema TOTVS.
+
+O foco inicial do MVP é o fluxo de **Aumento de Quadro**, permitindo que a jornada aconteça no portal com rastreabilidade, integração com ACL/RM e base para evolução futura de novos processos.
+
+## Objetivo do projeto
+
+O projeto `Requisições RH` tem como objetivo criar um portal próprio para abertura, acompanhamento e aprovação de solicitações de RH, com foco inicial no fluxo de **Aumento de Quadro**.
+
+O portal deve permitir que gestores e cenários delegados executem a jornada fora da experiência nativa do RM, mantendo integração com o ecossistema TOTVS e com o fluxo de aprovações já utilizado pela empresa.
+
+## Escopo funcional atual
+
+O foco atual do MVP é:
+
+- autenticação do usuário
+- abertura de solicitação de Aumento de Quadro
+- persistência da solicitação no portal
+- integração com ACL e RM
+- início e acompanhamento do fluxo de aprovação
+- listagem e detalhe da solicitação
+- administração de RH Central e permissões
+
+## Frentes do projeto
+
+### Gerencial
+
+Responsável:
+
+- **Lucas Camilo Dutra**
+
+### Frontend
+
+Responsável:
+
+- **Mackson Mesquita**
+
+### Backend
+
+Responsáveis:
+
+- **Guilherme Lourenço**
+- **Willian Augusto Ferreira**
+
+## Componentes principais da solução
+
+### Portal RH
+
+Responsável pela interface do usuário, fluxo das telas, formulário, listagem, detalhe e experiência de aprovação.
+
+### API Portal RH
+
+Responsável por regras próprias do portal, persistência, rastreabilidade, vínculo entre processos e orquestração das integrações.
+
+### ACL
+
+Responsável pela integração com o RM, incluindo aprovações, tickets e fluxos necessários.
+
+### API de Login
+
+Será utilizada uma nova rota na API `JofegeLogin` para atender o fluxo de autenticação necessário ao projeto.
+
+## Pontos técnicos relevantes já definidos
+
+- a autenticação será tratada por uma nova rota na API de login
+- a ACL será usada como base para iniciar a aprovação
+- ao iniciar a aprovação, haverá também uma etapa ligada ao processo de **Aumento de Quadro** no RM
+- será necessário manter o vínculo entre aprovação e Aumento de Quadro
+- haverá um renderizador de Markdown vinculado ao processo para montar conteúdo dinâmico na tela de detalhe da aprovação
+
+## Recomendação de vínculo entre aprovação e Aumento de Quadro
+
+A recomendação mais segura é manter esse vínculo no backend do Portal RH com persistência própria.
+
+Exemplo de dados a manter:
+
+- `idPortal`
+- `idTicketRm`
+- `idAumentoQuadroRm`
+- `tipoSolicitacao`
+- `statusPortal`
+- `statusRm`
+- `createdAt`
+- `updatedAt`
+
+---
+
+# Links centrais do projeto
+
+| Categoria | Item | Link | Observação |
+| :-- | :-- | :-- | :-- |
+| GitHub | Frontend | `Criar` | Repositório ainda não informado |
+| GitHub | Backend | `Criar` | Repositório ainda não informado |
+| GitHub | ACL | [ACL TOTVS RM](https://github.com/grupo-jofege/JFGAPI-JV-RMTICKET-01) | Repositório atual usado como base de integração |
+| GitHub | Login | [API JofegeLogin](https://github.com/grupo-jofege/JFGAPI-JV-LOGIN-01) | Confirmar se este é o repositório mais atual |
+| Protótipo | Figma | [Protótipo no Figma](https://www.figma.com/make/4PgOmTGXFZTbci9dRpsT8B/Requisicoes-RH?t=I4Rms2o8bomde61G-1) | Referência de interface e fluxo |
+| Documentação | Teams | [Link compartilhado no Teams](https://teams.microsoft.com/l/message/19:meeting_NDczNDJlNmItZWJiMy00ODYzLTgxMjgtNTUyOGRhNDJlZTUx@thread.v2/1783443161936?context=%7B%22contextType%22%3A%22chat%22%7D) | Material compartilhado do projeto |
+| Referência TOTVS | Minhas Aprovações | [TOTVS - Minhas Aprovações e fluxo](https://centraldeatendimento.totvs.com/hc/pt-br/articles/1500010490282-Cross-Segmentos-TOTVS-Aprova%C3%A7%C3%B5es-e-Atendimento-App-Minhas-Aprova%C3%A7%C3%B5es-Como-criar-Tipo-de-atendimento-com-etapas-e-fluxos-para-utiliza%C3%A7%C3%A3o-no-APP-Minhas-Aprova%C3%A7%C3%B5es) | Referência para tipo de atendimento, etapas e fluxo |
+| Swagger | API TOTVS Tickets | [Swagger da API TOTVS Tickets](https://api.totvs.com.br/apidetails/Tickets_v1_002.json) | Referência pública da API de tickets |
+| Swagger | API TOTVS interna | [Swagger da nossa API TOTVS](http://10.10.1.40:8051/api/swagger/ui/index) | Endpoint informado na reunião |
+
+---
+
+# Referências internas recomendadas
+
+## Stack Flutter
+
+- `stack-arquitetura-flutter-portal-rh.md`
+
+Esse documento deve ser usado como base para iniciar o frontend.
+
+## Próximos links que vale manter aqui
+
+Quando existirem, adicionar:
+
+- link do repositório frontend
+- link do repositório backend do Portal RH
+- link da documentação técnica central
+- link do board/projeto no Asana

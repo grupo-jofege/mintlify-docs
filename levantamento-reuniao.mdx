@@ -1,0 +1,371 @@
+---
+title: "Portal de Requisição de Funcionários (Externos) — Especificação"
+---
+
+## 1. Visão geral
+
+O Portal de Requisição de Funcionários é uma aplicação web (embutida no Fluig via widget) para que gestores — incluindo gestores cadastrados como “externos” no RM — possam abrir e acompanhar solicitações relacionadas a requisição de colaboradores. O foco inicial do projeto é atender o cenário de **Aumento de Quadro**, com evolução planejada para outros tipos de requisições (ex.: desligamento/substituição, transferência, alteração de dados funcionais).
+
+A abertura da solicitação acontece via portal, e a aprovação ocorre utilizando o ecossistema de aprovações do TOTVS RM (consumido via API), com acompanhamento de status no portal.
+
+## 2. Objetivos
+
+1. Permitir que gestores (inclusive externos) abram requisições sem depender do fluxo “nativo” do RM.
+2. Centralizar a experiência de solicitação e acompanhamento no portal.
+3. Disparar o processo de aprovação no RM e monitorar seu andamento pelo portal.
+4. Garantir uma integração robusta com TOTVS via camada anti-corrupção, isolando regras e formatos externos do domínio do portal.
+5. Evoluir o portal para suportar múltiplos tipos de solicitações e conteúdo dinâmico (páginas), sem comprometer o núcleo de solicitação e acompanhamento.
+
+## 3. Contexto e motivação (conforme levantamento)
+
+1. A maioria dos gestores está cadastrada como “externo”, o que impõe limitações no RM para abertura de requisições, pois o “requisitante” do RM precisa estar vinculado a uma **chapa (PFUNC)**.
+2. Para contornar isso, o input no RM deve ocorrer “em nome” de um usuário interno (RH), mas o portal precisa registrar e tratar quem é o requisitante real (gestor externo).
+3. A aprovação deve ocorrer no RM (“Minhas Aprovações”), e o portal deve oferecer acompanhamento do status (ex.: Em andamento / Aprovado / Cancelado / Concluído).
+
+## 4. Escopo
+
+**4.1. Escopo da Fase 1 (MVP)**
+
+1. Tipo de requisição: **Aumento de Quadro**.
+2. Etapa 1: **Formulário de solicitação** (criação da requisição).
+3. Etapa 2: **Página de acompanhamento** (lista \+ detalhes \+ status).
+4. Integração para:
+5. Criar a requisição no RM a partir dos dados do formulário.
+6. Abrir/registrar atendimento/fluxo de aprovação associado (HAtendimentoBase / atendimento RM).
+7. Consultar o status do fluxo no RM e refletir no portal.
+8. Permissões e acesso para usuários internos e “externos” com conta no Fluig.
+
+**4.2. Escopo da Fase 2 (Evolução)**
+
+1. Novos tipos de solicitação no portal (além do Aumento de Quadro):
+2. Desligamento \+ Substituição (quando aplicável).
+3. Transferência de funcionário.
+4. Alteração de dados funcionais (ex.: alterações salariais).
+5. Motor de Markdown para páginas dinâmicas (conteúdo de apoio, FAQs, políticas, instruções).
+6. Banco não relacional para armazenar a especificação e o conteúdo do Markdown (páginas e navegação), permitindo publicar/atualizar páginas sem deploy do portal.
+
+**4.3. Fora de escopo (por ora)**
+
+1. Portal “para fora” do Fluig (usuários realmente externos sem conta/licença Fluig).
+2. Integração com ATS/Recrutamento e Seleção (no momento, não vinculada).
+
+**4.4. Entregáveis4.4.1. Entregáveis da Fase 1 (MVP)**
+
+1. Portal React embarcado como widget no Fluig, com navegação entre:
+2. Nova Solicitação (Aumento de Quadro).
+3. Minhas Solicitações (listagem).
+4. Detalhe da Solicitação (status e dados).
+5. Formulário de Aumento de Quadro com validações de obrigatoriedade e consistência.
+6. Integração com TOTVS RM (via camada anti-corrupção) para:
+7. Criação da requisição no RM.
+8. Abertura do atendimento/fluxo de aprovação.
+9. Consulta de status no “Minhas Aprovações” e normalização dos status para o portal.
+10. Parametrização do RH central (requisitante técnico) com possibilidade de troca sem alteração de código.
+11. Controle de acesso por grupos do Fluig (solicitantes/gestores e administradores).
+12. Persistência das solicitações do portal com rastreabilidade (idPortal ↔ identificadores RM, datas e status).
+
+**4.4.2. Entregáveis da Fase 2 (Evolução)**
+
+1. Implementação dos novos tipos de solicitação (desligamento/substituição, transferência, alteração de dados funcionais) com seus formulários e integrações.
+2. Motor de Markdown no portal para páginas dinâmicas.
+3. Banco não relacional com estrutura para páginas e navegação (slug, título, markdown, permissões e publicação).
+4. Administração de conteúdo (publicação/atualização) sem necessidade de deploy do portal.
+
+## 5. Perfis e usuários
+
+1. Gestor Requisitante (pode ser externo no RM): cria a solicitação e acompanha.
+2. Assistente/Delegado (interno): cria solicitação em nome de um gestor.
+3. Aprovador (cadeia do organograma): aprova pelo fluxo do RM (“Minhas Aprovações”).
+4. RH Central (usuário interno com chapa): usuário utilizado como “requisitante técnico” para input no RM; também atua como última etapa/ciência/efetivação (conforme fluxo definido no RM).
+5. Administrador do Portal: gerencia conteúdos Markdown e parâmetros (ex.: lista de RH centrais).
+
+## 6. Regras de negócio principais
+
+**6.1. Requisitante técnico x requisitante real**
+
+1. Requisitante técnico (RM): **sempre deve ser um usuário interno com chapa**, definido por configuração (ex.: Clodoaldo/Camila/Fernanda, etc.).
+2. Requisitante real (portal): pessoa/gestor que efetivamente solicita a vaga (pode ser externo), informada no formulário e usada para:
+3. Identificar organograma e alçadas de aprovação.
+4. Registrar rastreabilidade e auditoria.
+5. Exibir corretamente a autoria e o acompanhamento ao solicitante.
+
+**6.2. Delegação (alguém solicita em nome do gestor)**
+
+1. O usuário logado no Fluig pode não ser o requisitante real.
+2. O portal deve permitir selecionar/informar o requisitante real e, quando necessário, direcionar a primeira aprovação ao gestor responsável do requisitante real.
+3. O processo deve suportar casos em que o requisitante real precisa aprovar a própria solicitação (quando ele mesmo abriu).
+
+**6.3. Campos obrigatórios do Aumento de Quadro**
+
+O formulário deve espelhar os campos do RM para “Aumento de Quadro”, incluindo obrigatórios e complementares:
+
+1. Empresa / Coligada
+2. Filial
+3. Seção
+4. Função (vaga requisitada)
+5. Requisitante real (gestor solicitante; pode ser PJ/externo)
+6. Obra/Projeto (campo citado como “US” no levantamento; deve ser tratado como informação obrigatória quando aplicável)
+7. Previsão de início (data desejada para início)
+8. Quantidade de vagas
+9. Justificativa
+
+Observação sobre salário/faixa:
+
+1. Caso o RM preencha automaticamente informações de faixa salarial conforme tabelas (por função), o portal **não deve exigir** que o solicitante informe salário. O portal deve apenas enviar os dados necessários para que o RM compute automaticamente o restante.
+
+**6.4. Status e acompanhamento**
+
+1. O portal deve refletir os status relevantes do RM (no mínimo):
+2. Em andamento
+3. Aprovado
+4. Cancelado
+5. Concluído
+6. O portal deve permitir ao solicitante acompanhar:
+7. Número/identificador da requisição (portal \+ RM)
+8. Etapa atual (quando disponível via API)
+9. Responsável atual (quando disponível via API)
+10. Histórico de movimentações (quando disponível via API)
+
+**6.5. Parametrização do RH central**
+
+1. Deve existir uma configuração (admin) que permita trocar o “RH central” sem mudança de código.
+2. Deve suportar múltiplos RH centrais por contexto (ex.: por empresa/negócio/obra/consórcio), quando aplicável.
+
+## 7. Experiência do usuário (UX) e jornadas
+
+**7.1. Jornada A — Gestor cria e acompanha**
+
+1. Usuário acessa o portal no Fluig.
+2. Abre “Nova solicitação”.
+3. Seleciona tipo “Aumento de Quadro”.
+4. Preenche campos obrigatórios.
+5. Envia.
+6. Portal cria requisição no RM usando RH central como requisitante técnico.
+7. Portal dispara abertura do atendimento/fluxo de aprovação.
+8. Usuário acompanha status na página “Minhas solicitações”.
+
+**7.2. Jornada B — Assistente cria em nome do gestor**
+
+1. Assistente acessa portal e abre nova solicitação.
+2. Informa requisitante real (gestor).
+3. Preenche demais dados e envia.
+4. Fluxo inicia e primeira aprovação pode ser direcionada ao gestor requisitante real, conforme regra do processo.
+5. Assistente e gestor acompanham o andamento (conforme permissões).
+
+## 8. Requisitos funcionais
+
+**8.1. Formulário (Etapa 1)**
+
+1. RF01: Criar solicitação de Aumento de Quadro via formulário.
+2. RF02: Validar campos obrigatórios antes de enviar.
+3. RF03: Permitir informar requisitante real diferente do usuário logado.
+4. RF04: Permitir seleção/derivação de empresa/coligada/filial/seção/função a partir de listas controladas (evitar digitação livre quando possível).
+5. RF05: Persistir solicitação no portal com um identificador próprio, mesmo antes da confirmação do RM (para rastreio e suporte).
+6. RF06: Enviar solicitação ao RM através da camada anti-corrupção e registrar identificadores retornados.
+7. RF07: Disparar abertura do atendimento/fluxo de aprovação no RM (HAtendimentoBase ou API equivalente).
+
+**8.2. Acompanhamento (Etapa 2)**
+
+1. RF08: Listar solicitações do usuário (criadas por ele e/ou em nome dele, conforme regras).
+2. RF09: Exibir detalhe da solicitação (dados enviados, identificadores, status atual).
+3. RF10: Atualizar status consultando a API de aprovações do RM (minhas aprovações) via camada anti-corrupção.
+4. RF11: Exibir indicadores de status (ex.: “em andamento”, “aprovado”) e data de última atualização.
+5. RF12: Permitir filtros e busca (por status, período, empresa/coligada, tipo).
+
+**8.3. Administração e parametrizações**
+
+1. RF13: Gerenciar lista/configuração de RH centrais (por contexto).
+2. RF14: Gerenciar permissões de acesso (grupos Fluig) por funcionalidade.
+
+**8.4. Conteúdo dinâmico (Markdown) — Fase 2**
+
+1. RF15: Renderizar páginas Markdown dentro do portal.
+2. RF16: Carregar estrutura de navegação (menu/rotas) a partir de um repositório NoSQL (ex.: coleção com slug, título, corpo markdown, permissões).
+3. RF17: Permitir que novos conteúdos sejam publicados sem deploy do portal (apenas atualização no NoSQL).
+
+## 9. Requisitos não funcionais
+
+1. RNF01: Segurança por autenticação do Fluig e autorização por grupos.
+2. RNF02: Logs operacionais sem dados sensíveis (somente IDs, correlação e contexto).
+3. RNF03: Resiliência a falhas de integração (fila/retry controlado, mensagens claras ao usuário).
+4. RNF04: Observabilidade com correlação de requisição ponta-a-ponta (portal ↔ camada anti-corrupção ↔ RM).
+5. RNF05: UI responsiva e compatível com padrões do Fluig widget.
+6. RNF06: Desempenho: listagens com paginação e cache curto para status.
+
+## 10. Arquitetura técnica
+
+**10.1. Front-end**
+
+1. React (aplicação do portal)
+2. Embutido como widget do Fluig
+3. Camadas recomendadas:
+4. UI (componentes e rotas)
+5. Domínio (modelos e casos de uso)
+6. Gateways (integrações via anti-corrupção)
+
+**10.2. Integrações**
+
+1. TOTVS RM:
+2. Criação de requisição (movimento/registro equivalente ao “Aumento de Quadro”)
+3. Abertura de atendimento (HAtendimentoBase / serviço de abertura)
+4. Consulta de aprovações (“Minhas Aprovações”) e status do fluxo
+
+**10.3. Camada anti-corrupção (ACL)**
+
+Objetivo: proteger o portal contra acoplamento aos formatos e regras do RM.
+
+1. Entrada: comandos do domínio do portal (ex.: CreateRequisicaoAumentoQuadroCommand)
+2. Saída: DTOs/objetos de domínio do portal (ex.: SolicitaçãoStatus)
+3. Responsabilidades:
+4. Mapear campos (portal → RM)
+5. Normalizar/interpretar status do RM em um conjunto estável de status do portal
+6. Tratar autenticação/headers/tokens exigidos pelo RM
+7. Implementar retry, timeouts e erros padronizados
+
+**10.4. Conteúdo Markdown \+ NoSQL (Fase 2)**
+
+1. Um banco não relacional armazenará:
+2. Páginas: slug, título, markdown, tags, permissões
+3. Navegação: árvore de menus e ordem
+4. Versões/publicação (opcional)
+5. O portal consulta o NoSQL e renderiza com motor de Markdown, gerando páginas “dinâmicas” sem rebuild.
+
+## 11. Dados e rastreabilidade (modelo lógico)
+
+**11.1. Entidade: Solicitação**
+
+1. idPortal
+2. tipo (AUMENTO\_QUADRO)
+3. requisitanteReal (ppessoaId e/ou identificador)
+4. solicitanteCriador (usuário Fluig)
+5. empresa/coligada, filial, seção, função
+6. obraProjeto (US)
+7. previsaoInicio, quantidadeVagas, justificativa
+8. rhCentralConfigId
+9. idRmRequisicao (quando criado)
+10. idRmAtendimento / idFluxoAprovacao (quando aberto)
+11. statusNormalizado
+12. statusRawRm (quando aplicável)
+13. datas (criação, envio, última sincronização, conclusão)
+
+**11.2. Entidade: PáginaMarkdown (Fase 2)**
+
+1. slug
+2. titulo
+3. markdown
+4. gruposPermitidos (opcional)
+5. publicadaEm
+
+## 12. Histórias de usuário (baseadas na transcrição) \+ critérios de aceite
+
+**Epic 1 — Solicitar Aumento de Quadro**
+
+**US01 — Abrir solicitação de aumento de quadro**
+
+1. Como gestor (inclusive externo), quero preencher um formulário de aumento de quadro no portal, para iniciar o processo sem acessar o RM diretamente. Critérios de aceite:
+2. Dado que estou autenticado no Fluig, quando acesso “Nova solicitação”, então vejo a opção “Aumento de Quadro”.
+3. Quando envio o formulário com todos os campos obrigatórios preenchidos, então o portal registra uma Solicitação com idPortal.
+4. Quando a integração com RM retorna sucesso, então a solicitação passa a exibir os identificadores do RM (requisição e atendimento/fluxo).
+5. Quando ocorre erro na integração, então o portal exibe mensagem clara e mantém a solicitação com status “Falha ao enviar” (com possibilidade de reenvio controlado).
+
+**US02 — Validar campos obrigatórios**
+
+1. Como solicitante, quero validação de campos obrigatórios antes do envio, para evitar abertura incompleta. Critérios de aceite:
+2. Se empresa/coligada, filial, seção, função, requisitante real, obra/projeto (US, quando aplicável), previsão de início, quantidade de vagas ou justificativa estiverem vazios, então o envio é bloqueado e o campo é destacado.
+3. Quantidade de vagas aceita apenas valores inteiros positivos.
+4. Previsão de início não pode ser data anterior ao dia atual (considerando timezone do servidor/portal).
+
+**US03 — Informar requisitante real diferente do usuário logado**
+
+1. Como assistente, quero abrir uma solicitação em nome de um gestor, para apoiar gestores que delegam a atividade. Critérios de aceite:
+2. O formulário permite selecionar/informar o requisitante real.
+3. A solicitação registra tanto “criador” (usuário logado) quanto “requisitante real”.
+4. O detalhe da solicitação exibe claramente ambos.
+
+**US04 — Usar RH central como requisitante técnico para input no RM**
+
+1. Como portal, quero criar a requisição no RM usando um usuário interno de RH como requisitante técnico, para contornar a limitação do RM com gestores externos. Critérios de aceite:
+2. Ao enviar a solicitação, o portal utiliza o RH central configurado como requisitante técnico na chamada de criação no RM.
+3. O requisitante real é armazenado no portal e enviado ao RM como campo complementar quando aplicável.
+4. É possível trocar o RH central por configuração, sem alteração de código.
+
+**Epic 2 — Aprovação e acompanhamento**
+
+**US05 — Disparar fluxo de aprovação no RM**
+
+1. Como portal, quero abrir o atendimento/fluxo no RM após criar a requisição, para que as aprovações ocorram no “Minhas Aprovações”. Critérios de aceite:
+2. Após a criação da requisição no RM, o portal cria/abre o atendimento associado e obtém um identificador de fluxo.
+3. Se a abertura do atendimento falhar, o portal registra a falha e permite retentativa sem duplicar requisições (idempotência por idPortal).
+
+**US06 — Acompanhar status da solicitação no portal**
+
+1. Como solicitante, quero acompanhar o status da minha solicitação, para saber se foi aprovada e em que etapa está. Critérios de aceite:
+2. Existe uma página “Minhas solicitações” com listagem paginada.
+3. Cada item exibe: tipo, requisitante real, data de criação e status.
+4. Ao abrir o detalhe, o portal consulta a API de aprovações do RM (via ACL) e atualiza o status normalizado.
+5. O status exibido inclui, no mínimo: Em andamento, Aprovado, Cancelado, Concluído.
+
+**US07 — Visualizar painel/indicador de status**
+
+1. Como gestor, quero ver rapidamente um indicador do status de cada solicitação, para monitorar o andamento. Critérios de aceite:
+2. A listagem mostra um “badge” de status com cores/estados consistentes.
+3. A listagem permite filtrar por status e período.
+
+**Epic 3 — Permissões e acesso**
+
+**US08 — Acessar o portal com perfis internos e externos (via Fluig)**
+
+1. Como usuário cadastrado no Fluig (mesmo classificado como externo no RM), quero acessar o portal, para abrir e acompanhar solicitações. Critérios de aceite:
+2. Usuários autenticados no Fluig conseguem acessar o portal conforme seu grupo/perfil.
+3. Usuários sem permissão recebem mensagem de acesso negado.
+
+**US09 — Controlar permissões por grupos**
+
+1. Como administrador, quero definir grupos para controlar quem pode criar solicitações e quem pode administrar parâmetros e conteúdos. Critérios de aceite:
+2. Existem no mínimo dois perfis/grupos: Solicitantes/Gestores e Administradores.
+3. Funcionalidades administrativas (parâmetros e páginas markdown) ficam indisponíveis para não administradores.
+
+**Epic 4 — Conteúdo dinâmico (Markdown) (Fase 2)**
+
+**US10 — Renderizar páginas de ajuda via Markdown**
+
+1. Como usuário, quero acessar páginas de orientação (ex.: como preencher, políticas), para reduzir dúvidas e erros. Critérios de aceite:
+2. O portal exibe uma seção de conteúdo cujo corpo é renderizado a partir de Markdown.
+3. Links internos funcionam por slug/rota.
+4. O portal suporta atualização de conteúdo sem novo deploy (fonte NoSQL).
+
+**US11 — Restringir páginas Markdown por permissões**
+
+1. Como administrador, quero restringir páginas a grupos específicos, para publicar conteúdos internos sem expor a todos. Critérios de aceite:
+2. Uma página Markdown pode definir grupos permitidos.
+3. Usuários fora dos grupos não visualizam a página no menu e não conseguem acessá-la por URL.
+
+## 13. Custos e Entregáveis
+
+|  |  |  |
+| :-- | :-- | :-- |
+| Entregável | Previsão de Horas | Fase |
+| Api - Integração com TOTVs | 90 ~ 2 semanas | 1 |
+| Portal - Solicitação de Funcionário | 68 ~ 1,5 semana | 1 |
+| Portal - Acompanhamento de Funcionário | 120 ~ 2,5 semanas | 1 |
+| Api - Motor de Markdown | 90 ~ 2 semanas | 2 |
+| Portal - Conteúdo dinâmico (Markdown) | 90 ~ 2 semanas | 2 |
+
+**Totais**
+
+|  |  |
+| :-- | :-- |
+| Fase | Duração prevista |
+| Fase 1 | 278 horas ~ 1,5 mês |
+| Fase 2 | 180 horas ~ 1 mês |
+
+**Datas**
+
+1. Inicio: 22/06/2026
+2. Fim Fase 1 - 10/08/2026
+
+## 13. Roadmap sugerido (pós-MVP)
+
+1. Fase 2: Requisições de desligamento \+ substituição, transferência e alteração de dados funcionais.
+2. Fase 2: Motor de Markdown \+ NoSQL para páginas dinâmicas e publicação sem deploy.
+3. Consolidação: evolução do portal para contemplar outros processos integrados ao “Minhas Aprovações”.

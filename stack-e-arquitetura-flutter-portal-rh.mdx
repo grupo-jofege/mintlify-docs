@@ -1,0 +1,881 @@
+---
+title: "Stack e Arquitetura Flutter — Portal RH"
+description: "Guia de arquitetura baseada em feature-first para o Portal RH, com foco em organização por domínio, escalabilidade e orientação prática para o time de desenvolvimento."
+---
+
+# Stack e Arquitetura Flutter — Portal RH
+
+## Objetivo desta definição
+
+Este documento define a arquitetura de referência do Portal RH em Flutter.
+
+Ele deve servir como **guia prático para o time de desenvolvimento**, ajudando a responder:
+
+- como o projeto será organizado
+- onde cada tipo de código deve ficar
+- como separar interface, regra de negócio e integração
+- como manter o projeto escalável sem excesso de abstração
+- como padronizar novas features ao longo do tempo
+
+O objetivo não é criar uma arquitetura bonita no papel e difícil de manter. A proposta aqui é usar um modelo que o time consiga aplicar no dia a dia sem ambiguidade.
+
+---
+
+# Diretriz arquitetural
+
+## Base da arquitetura
+
+O Portal RH vai seguir esta combinação:
+
+- **feature-first**
+- **Clean Architecture**
+- **DDD leve**
+- **Cubit por padrão**
+- **Bloc quando necessário**
+
+## O que isso significa na prática
+
+### Feature-first
+
+O projeto será organizado por **contexto de negócio**, e não por uma separação global de camadas no nível mais alto.
+
+Em vez de termos algo como:
+
+- `pages/`
+- `repositories/`
+- `datasources/`
+- `usecases/`
+
+tudo espalhado no projeto inteiro, cada domínio terá sua própria estrutura.
+
+Exemplo:
+
+- `features/authentication`
+- `features/requisitions`
+- `features/approvals`
+- `features/administration`
+
+Essa é a principal decisão deste documento.
+
+### Clean Architecture
+
+Dentro de cada feature, o código será separado por responsabilidade:
+
+- `presentation`
+- `domain`
+- `data`
+
+Ou seja:
+
+- a interface fica em `presentation`
+- a regra de negócio fica em `domain`
+- a integração e infraestrutura ficam em `data`
+
+### DDD leve
+
+O projeto não precisa de DDD pesado, cheio de camadas extras e modelagem exagerada.
+
+O uso de DDD aqui será objetivo:
+
+- nomear corretamente o domínio
+- manter entidades e contratos com linguagem de negócio
+- evitar que DTO de API dite a estrutura interna do sistema
+
+---
+
+# Por que usar feature-first neste projeto
+
+O Portal RH é um projeto com:
+
+- múltiplas frentes
+- várias features
+- integrações externas
+- regras de negócio específicas
+- potencial de crescimento após o MVP
+
+Se o projeto fosse organizado só por camada técnica global, o risco seria alto de virar um monólito difícil de navegar.
+
+Com `feature-first`, cada módulo fica mais coeso.
+
+Benefícios:
+
+- facilita entendimento do projeto
+- melhora o onboarding de novos devs
+- reduz acoplamento entre contextos
+- permite ownership por domínio
+- ajuda a escalar o projeto sem desorganização
+
+---
+
+# Stack definida
+
+## Tabela da stack
+
+| Categoria | Tecnologia | Papel no projeto |
+| :-- | :-- | :-- |
+| Arquitetura | Feature-first \+ Clean Architecture \+ DDD leve | organizar por domínio e responsabilidade |
+| Estado | Cubit / Bloc | controlar estado e fluxo da interface |
+| Navegação | GoRouter | estruturar rotas e guards |
+| HTTP | **Dio ou http** | comunicação com API Portal RH e ACL |
+| Models | Freezed \+ json\_serializable | imutabilidade e serialização |
+| Dependency Injection | GetIt \+ Injectable opcional | registro de dependências |
+| Banco Local | Drift | cache e persistência local quando necessário |
+| Storage Seguro | flutter\_secure\_storage | dados sensíveis |
+| Configuração | flutter\_dotenv | variáveis de ambiente |
+| Internacionalização | Flutter l10n | textos e localização |
+| Logging | logger | logging técnico controlado |
+| Testes | flutter\_test \+ mocktail \+ bloc\_test | testes por camada |
+
+---
+
+# Sobre a decisão de HTTP
+
+## Decisão em aberto: Dio ou http
+
+O projeto vai manter em aberto a escolha entre `Dio` e `http`.
+
+Essa decisão não deve afetar domínio nem apresentação.
+
+Por isso, a regra é:
+
+- o cliente HTTP deve ficar encapsulado em `core/network`
+- datasources dependem da abstração local do cliente
+- o resto da aplicação não deve conhecer Dio nem http diretamente
+
+## Quando usar Dio
+
+[https://pub.dev/packages/dio](https://pub.dev/packages/dio)
+
+`Dio` faz mais sentido se o projeto precisar de:
+
+- interceptors mais ricos
+- timeout mais configurável
+- logging mais completo
+- retry customizado
+- cancelamento de request
+- configuração HTTP mais robusta
+
+## Quando usar http
+
+[https://pub.dev/packages/http](https://pub.dev/packages/http)
+
+`http` faz mais sentido se o projeto quiser:
+
+- base mais enxuta
+- menor peso de abstração
+- integração simples
+- mais controle manual
+
+## Regra arquitetural correta
+
+A aplicação não deve depender de `Dio` ou `http`, mas de uma abstração local como:
+
+```dart
+abstract class HttpClient {
+  Future<HttpResponse> get(...);
+  Future<HttpResponse> post(...);
+  Future<HttpResponse> put(...);
+  Future<HttpResponse> delete(...);
+}
+```
+
+Isso permite trocar a implementação depois sem refatorar a aplicação inteira.
+
+---
+
+# Estrutura base do projeto
+
+A estrutura recomendada para o Portal RH é:
+
+```text
+lib/
+│
+├── main.dart
+│
+├── app/
+│   ├── app.dart
+│   ├── di/
+│   │   └── injection.dart
+│   ├── router/
+│   │   ├── app_router.dart
+│   │   ├── route_names.dart
+│   │   ├── route_paths.dart
+│   │   └── route_guards.dart
+│   ├── theme/
+│   │   ├── app_theme.dart
+│   │   ├── app_colors.dart
+│   │   ├── app_text_styles.dart
+│   │   └── app_spacing.dart
+│   └── localization/
+│       ├── arb/
+│       └── localization.dart
+│
+├── core/
+│   ├── base/
+│   │   ├── failure.dart
+│   │   ├── result.dart
+│   │   └── usecase.dart
+│   ├── constants/
+│   │   ├── app_constants.dart
+│   │   └── app_keys.dart
+│   ├── enums/
+│   │   └── app_status.dart
+│   ├── errors/
+│   │   ├── exceptions.dart
+│   │   ├── failures.dart
+│   │   └── error_mapper.dart
+│   ├── extensions/
+│   │   ├── context_extension.dart
+│   │   └── string_extension.dart
+│   ├── network/
+│   │   ├── http_client.dart
+│   │   ├── endpoints.dart
+│   │   ├── request_options.dart
+│   │   └── interceptors/
+│   │       ├── auth_interceptor.dart
+│   │       ├── correlation_interceptor.dart
+│   │       └── logging_interceptor.dart
+│   ├── services/
+│   │   ├── connectivity_service.dart
+│   │   ├── logger_service.dart
+│   │   └── session_service.dart
+│   ├── storage/
+│   │   ├── secure_storage_service.dart
+│   │   ├── preferences_service.dart
+│   │   └── database/
+│   │       └── app_database.dart
+│   ├── utils/
+│   │   ├── validators.dart
+│   │   ├── formatters.dart
+│   │   └── date_utils.dart
+│   └── widgets/
+│       ├── app_button.dart
+│       ├── app_textfield.dart
+│       ├── app_loading.dart
+│       ├── app_error_state.dart
+│       └── app_empty_state.dart
+│
+├── features/
+│   ├── authentication/
+│   ├── requisitions/
+│   ├── approvals/
+│   └── administration/
+│
+└── shared/
+    ├── enums/
+    ├── models/
+    └── widgets/
+```
+
+---
+
+# Papel de cada bloco raiz
+
+## `app/`
+
+Responsável pela configuração global do aplicativo.
+
+Contém:
+
+- inicialização principal
+- DI raiz
+- roteamento
+- tema
+- localização
+
+## `core/`
+
+Responsável por tudo que é transversal e não pertence a uma única feature.
+
+Contém:
+
+- base de resultado e falha
+- cliente HTTP
+- interceptors
+- storage
+- erros comuns
+- serviços globais
+- widgets reutilizáveis
+
+## `features/`
+
+Responsável pelos módulos de negócio.
+
+Cada feature deve ser autocontida.
+
+Essa é a pasta mais importante do projeto.
+
+## `shared/`
+
+Responsável por elementos reutilizáveis que ainda não pertencem a um domínio específico.
+
+Deve ser usada com cuidado para não virar um depósito genérico.
+
+---
+
+# Estrutura de uma feature
+
+Cada feature deve seguir este padrão:
+
+```text
+feature_name/
+│
+├── data/
+│   ├── datasource/
+│   ├── dto/
+│   ├── mapper/
+│   └── repositories/
+│
+├── domain/
+│   ├── entities/
+│   ├── repositories/
+│   ├── usecases/
+│   ├── value_objects/
+│   └── enums/
+│
+├── presentation/
+│   ├── pages/
+│   ├── widgets/
+│   ├── cubit/
+│   └── bloc/
+│
+└── di/
+    └── feature_module.dart
+```
+
+## Papel de cada camada da feature
+
+### `presentation`
+
+Responsável por interface e estado de apresentação.
+
+Contém:
+
+- páginas
+- widgets
+- cubits
+- blocs
+
+Essa camada reage ao usuário e mostra estado.
+
+### `domain`
+
+Responsável pela regra de negócio.
+
+Contém:
+
+- entidades
+- contratos de repositório
+- use cases
+- value objects
+
+Essa é a camada mais importante para proteger o domínio do projeto.
+
+### `data`
+
+Responsável por detalhes técnicos da feature.
+
+Contém:
+
+- datasources
+- DTOs
+- mappers
+- implementação de repositórios
+
+Essa camada conversa com API, banco local e storage.
+
+---
+
+# Features do Portal RH
+
+## 1. `authentication`
+
+Responsável por:
+
+- login RM
+- validação de sessão
+- logout
+- expiração de sessão
+- contexto do usuário autenticado
+
+Estrutura sugerida:
+
+```text
+authentication/
+│
+├── data/
+│   ├── datasource/
+│   │   ├── auth_remote_datasource.dart
+│   │   └── auth_local_datasource.dart
+│   ├── dto/
+│   │   ├── login_request_dto.dart
+│   │   ├── login_response_dto.dart
+│   │   └── session_dto.dart
+│   ├── mapper/
+│   │   └── auth_mapper.dart
+│   └── repositories/
+│       └── auth_repository_impl.dart
+│
+├── domain/
+│   ├── entities/
+│   │   ├── user.dart
+│   │   └── session.dart
+│   ├── repositories/
+│   │   └── auth_repository.dart
+│   └── usecases/
+│       ├── login_usecase.dart
+│       ├── logout_usecase.dart
+│       └── validate_session_usecase.dart
+│
+├── presentation/
+│   ├── pages/
+│   │   └── login_page.dart
+│   ├── widgets/
+│   │   └── login_form.dart
+│   └── cubit/
+│       ├── login_cubit.dart
+│       ├── login_state.dart
+│       ├── session_cubit.dart
+│       └── session_state.dart
+│
+└── di/
+    └── authentication_module.dart
+```
+
+## 2. `requisitions`
+
+Responsável por:
+
+- formulário de Aumento de Quadro
+- criação de solicitação
+- listagem de solicitações
+- detalhe da solicitação
+- filtros
+- rastreabilidade e status
+
+Estrutura sugerida:
+
+```text
+requisitions/
+│
+├── data/
+│   ├── datasource/
+│   │   ├── requisition_remote_datasource.dart
+│   │   └── requisition_local_datasource.dart
+│   ├── dto/
+│   │   ├── create_headcount_request_dto.dart
+│   │   ├── requisition_response_dto.dart
+│   │   ├── requisition_detail_dto.dart
+│   │   └── requisition_filter_dto.dart
+│   ├── mapper/
+│   │   └── requisition_mapper.dart
+│   └── repositories/
+│       └── requisition_repository_impl.dart
+│
+├── domain/
+│   ├── entities/
+│   │   ├── requisition.dart
+│   │   ├── requisition_detail.dart
+│   │   ├── requisition_history.dart
+│   │   └── headcount_request.dart
+│   ├── repositories/
+│   │   └── requisition_repository.dart
+│   └── usecases/
+│       ├── create_headcount_request_usecase.dart
+│       ├── list_requisitions_usecase.dart
+│       ├── get_requisition_detail_usecase.dart
+│       └── sync_requisition_status_usecase.dart
+│
+├── presentation/
+│   ├── pages/
+│   │   ├── requisition_list_page.dart
+│   │   ├── requisition_detail_page.dart
+│   │   ├── new_requisition_page.dart
+│   │   └── headcount_request_page.dart
+│   ├── widgets/
+│   │   ├── requisition_filters.dart
+│   │   ├── status_badge.dart
+│   │   └── headcount_form.dart
+│   ├── cubit/
+│   │   ├── requisition_list_cubit.dart
+│   │   ├── requisition_list_state.dart
+│   │   ├── requisition_detail_cubit.dart
+│   │   ├── requisition_detail_state.dart
+│   │   ├── headcount_form_cubit.dart
+│   │   └── headcount_form_state.dart
+│   └── bloc/
+│       └── approval_action_bloc.dart
+│
+└── di/
+    └── requisitions_module.dart
+```
+
+## 3. `approvals`
+
+Responsável por:
+
+- leitura do fluxo de aprovação
+- histórico
+- etapa atual
+- responsável atual
+- ações de aprovação e reprovação, quando houver
+
+## 4. `administration`
+
+Responsável por:
+
+- RH Central
+- permissões
+- parâmetros administrativos
+
+---
+
+# Fluxo da aplicação
+
+## Fluxo padrão recomendado
+
+```text
+View
+↓
+Cubit / Bloc
+↓
+UseCase
+↓
+Repository
+↓
+Datasource
+↓
+API / Banco Local
+```
+
+## Fluxo de retorno
+
+```text
+API / Banco Local
+↓
+Datasource
+↓
+Repository
+↓
+UseCase
+↓
+Cubit / Bloc
+↓
+View
+```
+
+## O que isso quer dizer para o time
+
+Na prática:
+
+- a página dispara uma ação
+- o Cubit ou Bloc coordena a tela
+- o UseCase executa a regra de negócio
+- o Repository abstrai a fonte de dados
+- o Datasource conversa com a infraestrutura
+
+O código deve seguir esse fluxo sem pular camada.
+
+---
+
+# Papel de cada camada
+
+## View
+
+A View:
+
+- renderiza a interface
+- escuta estado
+- dispara ação para Cubit/Bloc
+- organiza layout
+
+A View nunca deve:
+
+- chamar API
+- montar payload técnico
+- acessar repository
+- conhecer client HTTP
+
+## Cubit / Bloc
+
+Essa é a camada de apresentação.
+
+Ela deve:
+
+- controlar estado da tela
+- reagir a ações do usuário
+- chamar use cases
+- emitir estados específicos
+
+### Quando usar Cubit
+
+Usar por padrão em:
+
+- login
+- formulário
+- listagem
+- detalhe
+- filtros
+- administração simples
+
+### Quando usar Bloc
+
+Usar quando houver:
+
+- muitos eventos distintos
+- máquina de estados mais rica
+- polling complexo
+- fluxo com múltiplas transições relevantes
+
+## UseCase
+
+Representa uma ação de negócio com responsabilidade única.
+
+Exemplos:
+
+- `LoginUseCase`
+- `CreateHeadcountRequestUseCase`
+- `ListRequisitionsUseCase`
+- `GetRequisitionDetailUseCase`
+- `SyncRequisitionStatusUseCase`
+
+## Repository
+
+É a abstração de acesso ao dado do domínio.
+
+O domínio conhece contrato, não implementação.
+
+## Datasource
+
+É a borda técnica.
+
+Pode ser:
+
+- remoto
+- local
+- storage seguro
+
+Essa camada conversa com API, banco local, cache ou secure storage.
+
+---
+
+# Estados de apresentação
+
+## Regra recomendada
+
+Evitar estados genéricos demais.
+
+Em vez de:
+
+- `Loading`
+- `Success`
+- `Error`
+
+Preferir:
+
+- `LoginInitial`
+- `LoginLoading`
+- `LoginInvalidCredentials`
+- `LoginNetworkError`
+- `LoginExpiredSession`
+- `HeadcountFormLoadingLookups`
+- `HeadcountFormValidationError`
+- `HeadcountFormSubmitSuccess`
+
+Isso melhora:
+
+- clareza do fluxo
+- manutenção
+- leitura do estado
+- qualidade da UX
+
+---
+
+# Tratamento de erros
+
+## Estratégia recomendada
+
+Não usar exceção como fluxo normal.
+
+Preferir:
+
+- `Either<Failure, T>`
+- ou `Result<T>` próprio
+
+## Hierarquia base de falhas
+
+```dart
+sealed class Failure {}
+
+class NetworkFailure extends Failure {}
+
+class UnauthorizedFailure extends Failure {}
+
+class ValidationFailure extends Failure {}
+
+class ServerFailure extends Failure {}
+
+class SessionExpiredFailure extends Failure {}
+
+class IntegrationFailure extends Failure {}
+```
+
+## Benefício
+
+Isso melhora:
+
+- previsibilidade
+- separação entre erro técnico e funcional
+- tratamento de UI
+- manutenção
+
+---
+
+# Dependency Injection
+
+## Estratégia
+
+Usar `GetIt` como padrão.
+
+`Injectable` é opcional.
+
+## Fluxo de registro
+
+```text
+GetIt
+↓
+Datasource
+↓
+Repository
+↓
+UseCase
+↓
+Cubit / Bloc
+```
+
+## Regra prática
+
+Registrar:
+
+- client HTTP
+- datasources
+- repositories
+- use cases
+- cubits/blocs
+
+Evitar registrar dependência desnecessária demais no escopo global.
+
+---
+
+# Estratégia de banco local
+
+## Papel do Drift
+
+O Drift só deve entrar quando houver necessidade real, como:
+
+- cache de lookups
+- apoio a listas auxiliares
+- persistência transitória
+- rascunho futuro
+
+Não usar banco local por padrão em todas as features.
+
+---
+
+# Estratégia de storage seguro
+
+## Papel do flutter\_secure\_storage
+
+Usar quando for necessário persistir:
+
+- token
+- refresh token
+- dados sensíveis de sessão
+
+Se a sessão do MVP ficar apenas em memória, isso deve ser mantido como decisão explícita.
+
+---
+
+# Estratégia de configuração
+
+## Papel do flutter\_dotenv
+
+Usar para:
+
+- URL base
+- ambiente
+- flags de comportamento
+
+Nunca para segredo sensível do backend.
+
+---
+
+# Estratégia de testes
+
+## Camadas a testar
+
+### UseCases
+
+- regra de negócio
+- sucesso
+- falha
+
+### Repository
+
+- mapeamento
+- fallback local/remoto
+- tratamento de erro
+
+### Cubit / Bloc
+
+- sequência de estados
+- sucesso
+- falha
+- fluxo de apresentação
+
+### Widget tests
+
+- login
+- formulário de Aumento de Quadro
+- listagem
+- detalhe
+
+### Integration tests
+
+- fluxos críticos ponta a ponta
+
+---
+
+# Regras de ouro para o time
+
+- **View não chama API**
+- **View não conhece Repository**
+- **Cubit/Bloc não conhece Dio nem http diretamente**
+- **UseCase não conhece widget**
+- **Repository não conhece tela**
+- **Datasource não carrega regra de negócio**
+- **DTO não sobe para a UI**
+- **Domain não depende de Flutter**
+- **Domain não depende de data**
+
+---
+
+# Recomendação final
+
+Para o Portal RH, a recomendação é:
+
+- **feature-first como organização principal**
+- **Clean Architecture dentro de cada feature**
+- **DDD leve para modelagem**
+- **Cubit por padrão**
+- **Bloc apenas quando necessário**
+- **Dio ou http encapsulado em `core/network`**
+- **GetIt para DI**
+- **Freezed \+ json\_serializable para models**
+- **Drift quando houver necessidade real**
+- **flutter\_secure\_storage para dados sensíveis**
+- **flutter\_dotenv para ambientes**
+- **logger para logging**
+- **flutter\_test \+ mocktail \+ bloc\_test para testes**
+
+---
