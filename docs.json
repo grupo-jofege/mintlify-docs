@@ -27,14 +27,14 @@
       {
         "group": "Requisições RH",
         "pages": [
-          "portal-de-requisicao",
-          "levantamento-reuniao",
-          "untitled-page",
-          "map",
-          "figm",
-          "visao-geral-do-mvp-requisicoes-rh",
-          "stack-e-arquitetura-flutter-portal-rh",
-          "untitled-pagea"
+          "prh_portal-de-requisicao",
+          "prh_levantamento-reuniao",
+          "prh_documentacao_reuniao",
+          "prh_map_screeen",
+          "prh_figma",
+          "prh_visao-geral-do-mvp",
+          "prh_stack-e-arquitetura-flutter",
+          "prh_reuniao_07-07"
         ]
       },
       {
