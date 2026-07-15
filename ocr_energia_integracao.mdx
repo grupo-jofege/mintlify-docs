@@ -26,16 +26,8 @@ Esta página organiza os contratos técnicos da solução com os serviços exter
 
 ### Autenticação OAuth2
 
-Endpoint:
-
 ```text
 POST https://jofege.virtual360.io/bus/oauth/token
-```
-
-Content-Type:
-
-```text
-application/x-www-form-urlencoded
 ```
 
 Body:
@@ -46,20 +38,13 @@ client_id={client_id}
 client_secret={client_secret}
 ```
 
-Uso no fluxo:
-
-- o node `Auth V360` obtém o token
-- o token é enviado em `Authorization: Bearer {token}`
-
 ### Consulta incremental de documentos
-
-Endpoint:
 
 ```text
 GET https://jofege.virtual360.io/nf/api/v2/tax_documents
 ```
 
-Parâmetros usados:
+Parâmetros:
 
 ```text
 limit={limite}
@@ -71,8 +56,6 @@ query_template=completed
 
 ### Consulta pontual para renovar o PDF
 
-Antes do download, o workflow consulta novamente o documento específico para obter uma URL assinada válida.
-
 Regra importante:
 
 - `document_pdf_url` não deve ser persistida no banco
@@ -81,8 +64,6 @@ Regra importante:
 ## Recognition
 
 ### Envio do PDF
-
-Endpoint:
 
 ```text
 POST https://app.recognition-ia.com/recognition-api/api/v1/services/batches
@@ -100,8 +81,6 @@ Body `multipart/form-data`:
 - `files = <arquivo PDF>`
 
 ### Polling do lote
-
-Endpoint:
 
 ```text
 GET https://app.recognition-ia.com/recognition-api/api/v1/services/batches/{documentId}
@@ -127,17 +106,7 @@ Status finais:
 
 ## API de e-mail
 
-### Objetivo
-
-Ao final da execução, o orquestrador chama o subworkflow de resumo, que monta um HTML e envia os indicadores operacionais.
-
-Endpoint:
-
-```text
-POST {config.urlJofegeMail}
-```
-
-Payload esperado:
+### Payload esperado
 
 ```json
 {
@@ -151,44 +120,9 @@ Payload esperado:
 }
 ```
 
-## Mapeamentos principais
-
-### V360 -\> CONTA\_ENERGIA\_DOCUMENTO
-
-| Origem | Destino |
-| --- | --- |
-| `id` | `ID_V360_DOCUMENTO` |
-| `model_type` | `MODEL_TYPE` |
-| `customer_identification_number` | `CUSTOMER_IDENTIFICATION_NUMBER` |
-| `supplier_identification_number` | `SUPPLIER_IDENTIFICATION_NUMBER` |
-| `number` | `DOCUMENT_NUMBER` |
-| `series` | `DOCUMENT_SERIES` |
-| `issue_date` | `ISSUE_DATE` |
-| `total_value` | `TOTAL_VALUE` |
-
-### Recognition -\> CONTA\_ENERGIA\_CONSUMO
-
-O retorno do OCR é tratado e transformado em um conjunto padronizado de itens de consumo antes da inserção em banco.
-
-Campos típicos:
-
-- `ordemConsumo`
-- `empresa`
-- `prestador`
-- `numInstalacao`
-- `consumoDescricao`
-- `consumoFinal`
-- `consumoTarifa`
-- `consumoValor`
-- `dataDocumento`
-- `dataVenc`
-- `notaFiscal`
-
 ## Contratos internos entre workflows
 
 ### Orquestrador -\> Download Arquivo
-
-Campos principais:
 
 - `idV360Documento`
 - `modelType`
@@ -199,16 +133,13 @@ Campos principais:
 
 ### Download Arquivo -\> Recognition
 
-Campos principais:
-
 - `idV360Documento`
 - `documentNumber`
 - `recognitionDocumentIdBanco`
 - `config`
+- `binary`
 
 ### Orquestrador -\> Envio Email
-
-Campos principais:
 
 - `config.urlJofegeMail`
 - `config.destinatarios`

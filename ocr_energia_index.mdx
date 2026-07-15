@@ -9,7 +9,7 @@ Esta documentação reúne a visão funcional e técnica da integração de cont
 
 ## O que esta solução faz
 
-A automação captura documentos no `V360`, controla o ciclo de processamento em banco, baixa o PDF atualizado, envia o arquivo para o `Recognition`, persiste o resultado tratado e consolida um resumo operacional por e-mail.
+A automação captura documentos no `V360`, controla o ciclo de processamento em banco, valida previamente o vínculo com `TMOVCOMPL`, baixa o PDF atualizado, envia o arquivo para o `Recognition`, persiste o resultado tratado e consolida um resumo operacional por e-mail.
 
 ## Leitura recomendada
 
@@ -22,7 +22,7 @@ A automação captura documentos no `V360`, controla o ciclo de processamento em
 
 | Tema | O que cobre |
 | --- | --- |
-| Arquitetura | Orquestração no `n8n`, subworkflows, fluxo ponta a ponta, idempotência e estratégia de estado |
+| Arquitetura | Orquestração no `n8n`, subworkflows, fluxo ponta a ponta, validação prévia de `IDMOV`, idempotência e estratégia de estado |
 | Dados | Estrutura das tabelas `CONTA_ENERGIA_DOCUMENTO` e `CONTA_ENERGIA_CONSUMO`, índices, exemplos SQL e auditoria |
 | Integrações | Endpoints do `V360`, envio e polling no `Recognition`, API de e-mail e contratos entre workflows |
 | Operação | Implantação, importação, checklist, troubleshooting e reprocessamento |
@@ -43,20 +43,18 @@ A automação captura documentos no `V360`, controla o ciclo de processamento em
 - `V360.0004.ALTER_CONTA_ENERGIA_CONSUMO_OCR.sql`
 - `V360.0005.RESET_CONTA_ENERGIA_CONSUMO.sql`
 - `V360.0006.RESET_CONTA_ENERGIA_DOCUMENTO.sql`
+- `V360.0007.ALTER_CONTA_ENERGIA_DOCUMENTO_ETAPA.sql`
 
 ## Escopo coberto
 
 - captura incremental de documentos no `V360`
 - retomada de documentos pendentes já registrados
 - renovação da URL assinada do PDF antes do download
+- validação prévia de `IDMOV` antes de baixar PDF e enviar ao `Recognition`
 - envio do arquivo para o `Recognition`
 - polling assíncrono com até 120 tentativas
-- persistência de status e falhas em `CONTA_ENERGIA_DOCUMENTO`
+- persistência de status, etapa e falhas em `CONTA_ENERGIA_DOCUMENTO`
 - persistência dos itens tratados em `CONTA_ENERGIA_CONSUMO`
-- vinculação com `GCOLIGADA` e `TMOVCOMPL`
+- vinculação com `GFILIAL` (somente `ATIVO = 1`) e `TMOVCOMPL`
 - envio de resumo operacional por e-mail
 - execução manual e agendada
-
-## Estrutura da documentação
-
-Cada página desta pasta foi organizada para ser publicada como uma documentação independente no Mintlify, mantendo navegação cruzada e leitura sequencial.
