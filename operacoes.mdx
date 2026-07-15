@@ -1,0 +1,271 @@
+---
+title: "Operação e importação"
+description: "Implantação, checklist, operação, troubleshooting e reprocessamento da solução OCR Contas Energia."
+---
+
+# Operação e importação
+
+Esta página consolida o passo a passo de implantação, os ajustes obrigatórios após importação, as rotinas operacionais e os cenários mais comuns de suporte.
+
+## Leitura relacionada
+
+- [OCR Contas Energia](./README)
+- [Arquitetura da solução](./arquitetura-v360)
+- [Tabelas V360](./tabelas-v360)
+- [Integrações e payloads](./integracoes-e-payloads)
+
+## Ordem de implantação
+
+### Banco de dados
+
+Executar nesta sequência:
+
+1. `V360.0002.CONTA_ENERGIA_DOCUMENTO.sql`
+2. `V360.0003.CONTA_ENERGIA_CONSUMO.sql`
+3. `V360.0004.ALTER_CONTA_ENERGIA_CONSUMO_OCR.sql`, quando o ambiente já existir
+
+Scripts de reset:
+
+- `V360.0005.RESET_CONTA_ENERGIA_CONSUMO.sql`
+- `V360.0006.RESET_CONTA_ENERGIA_DOCUMENTO.sql`
+
+### n8n
+
+Importar nesta ordem:
+
+1. `OCREnergia _ Download Arquivo.json`
+2. `OCREnergia _ Recognition.json`
+3. `OCREnergia _ Envio Email.json`
+4. `OCREnergia _ Orquestrador.json`
+
+## Ajustes obrigatórios após importação
+
+No workflow `OCREnergia | Orquestrador`, preencher:
+
+- `config.subworkflowDownloadArquivoId`
+- `config.subworkflowRecognitionId`
+- `config.subworkflowEnvioEmailId`
+- `config.urlJofegeMail`
+- `config.destinatarios`
+
+## Gatilhos disponíveis
+
+### Manual
+
+Usado para:
+
+- homologação
+- execução emergencial
+- reprocessamento assistido
+
+### Agendado
+
+Cron configurado:
+
+```text
+0 5 * * *
+```
+
+Interpretação:
+
+- execução diária às `05:00`
+
+## Papel de cada workflow
+
+### Orquestrador
+
+- inicializa a execução
+- busca novos documentos no `V360`
+- busca pendentes já existentes no banco
+- consolida a fila
+- decide se o item precisa de novo download
+- chama `Recognition`
+- chama o envio de e-mail ao final
+
+### Download Arquivo
+
+- consulta o documento novamente no `V360`
+- renova a URL do PDF
+- baixa o arquivo
+
+### Recognition
+
+- envia o PDF ao OCR
+- executa o polling
+- transforma o retorno
+- grava o consumo
+- atualiza status final
+
+### Envio Email
+
+- consolida o resumo operacional
+- monta o HTML
+- dispara a notificação
+
+## Regras operacionais
+
+### Idempotência
+
+Documento:
+
+- `ID_V360_DOCUMENTO` único
+- `CHAVE_NEGOCIO` única
+
+Consumo:
+
+- exclusão por `ID_DOC`
+- reinserção integral do conjunto tratado
+- unicidade por `ID_DOC` e `ORDEM_CONSUMO`
+
+### Retomada
+
+Documentos podem voltar ao fluxo quando:
+
+- `TRATADA = 0`
+- `STATUS_DOCUMENTO` ainda não estiver finalizado
+- `STATUS_RECOGNITION` indicar processamento pendente
+
+### PDF sempre renovado
+
+Nunca reutilizar uma `document_pdf_url` antiga. O documento deve ser consultado novamente antes do download.
+
+## Checklist de homologação
+
+### Banco
+
+Validar:
+
+- tabelas criadas com sucesso
+- índices presentes
+- chave estrangeira entre consumo e documento
+
+### n8n
+
+Validar:
+
+- credenciais corretas
+- IDs dos subworkflows preenchidos
+- `Schedule Trigger 05h` ativo
+- `config.urlJofegeMail` configurado
+
+### Fluxo funcional
+
+Testes sugeridos:
+
+1. executar manualmente com um documento novo
+2. validar insert em `CONTA_ENERGIA_DOCUMENTO`
+3. validar envio ao `Recognition`
+4. validar polling até `PROCESSED`
+5. validar insert em `CONTA_ENERGIA_CONSUMO`
+6. validar envio do e-mail
+
+## Consultas operacionais
+
+### Últimos documentos
+
+```sql
+SELECT TOP 50
+  ID,
+  ID_V360_DOCUMENTO,
+  DOCUMENT_NUMBER,
+  STATUS_DOCUMENTO,
+  STATUS_RECOGNITION,
+  TRATADA,
+  RECOGNITION_DOCUMENT_ID,
+  RECMODIFIEDON
+FROM dbo.CONTA_ENERGIA_DOCUMENTO
+ORDER BY RECMODIFIEDON DESC;
+```
+
+### Documentos com erro
+
+```sql
+SELECT
+  ID_V360_DOCUMENTO,
+  DOCUMENT_NUMBER,
+  STATUS_DOCUMENTO,
+  STATUS_RECOGNITION,
+  ETAPA_ERRO,
+  MENSAGEM_ERRO,
+  RECMODIFIEDON
+FROM dbo.CONTA_ENERGIA_DOCUMENTO
+WHERE STATUS_DOCUMENTO = 'ERRO'
+ORDER BY RECMODIFIEDON DESC;
+```
+
+### Pendentes para retomada
+
+```sql
+SELECT
+  ID,
+  ID_V360_DOCUMENTO,
+  DOCUMENT_NUMBER,
+  STATUS_DOCUMENTO,
+  STATUS_RECOGNITION,
+  RECOGNITION_DOCUMENT_ID,
+  DT_ULTIMA_TENTATIVA
+FROM dbo.CONTA_ENERGIA_DOCUMENTO
+WHERE ISNULL(TRATADA, 0) = 0
+  AND ISNULL(STATUS_DOCUMENTO, 'PENDENTE') <> 'PROCESSADO'
+ORDER BY ISNULL(DT_ULTIMA_TENTATIVA, RECCREATEDON), ID;
+```
+
+## Troubleshooting
+
+### Não retornou documento no V360
+
+Verificar:
+
+- filtros da consulta incremental
+- valor de `ultimo_id_v360`
+- validade do token OAuth
+
+### Download do PDF falhou
+
+Verificar:
+
+- se a URL foi renovada imediatamente antes do download
+- se o `document_pdf_url` veio no payload
+- se a URL expirou antes do consumo
+
+### Polling retornou erro
+
+Verificar:
+
+- se o `documentId` foi salvo corretamente
+- se o documento já havia sido enviado antes
+- se o status retornado ainda é transitório
+
+### Documento não gerou consumo
+
+Verificar:
+
+- se o OCR retornou `PROCESSED`
+- se o parser gerou itens válidos
+- se os itens não foram descartados pelo filtro de total
+- se houve vínculo com `GCOLIGADA` e `TMOVCOMPL`
+
+### E-mail não foi enviado
+
+Verificar:
+
+- `config.urlJofegeMail`
+- formato de `config.destinatarios`
+- disponibilidade da API de e-mail
+
+## Reprocessamento controlado
+
+Procedimento recomendado:
+
+1. identificar o `ID_V360_DOCUMENTO`
+2. localizar o `ID_DOC`
+3. remover consumos anteriores
+4. resetar status do documento
+5. executar o orquestrador manualmente
+
+## Próximas melhorias
+
+- auditoria por execução
+- dashboard operacional
+- alerta para falha de e-mail
+- isolamento do parser, caso a regra de OCR cresça

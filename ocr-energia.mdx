@@ -1,3 +1,62 @@
 ---
-title: "OCR Contas EnergiaOCR Energia"
+title: "OCR Contas Energia"
+description: "Visão geral da solução de OCR de contas de energia baseada em n8n, V360, Recognition e SQL Server."
 ---
+
+# OCR Contas Energia
+
+Esta documentação reúne a visão funcional e técnica da integração de contas de energia. O objetivo é servir como ponto de entrada para arquitetura, modelo de dados, integrações e operação da solução.
+
+## O que esta solução faz
+
+A automação captura documentos no `V360`, controla o ciclo de processamento em banco, baixa o PDF atualizado, envia o arquivo para o `Recognition`, persiste o resultado tratado e consolida um resumo operacional por e-mail.
+
+## Leitura recomendada
+
+- [Arquitetura da solução](./arquitetura-v360)
+- [Tabelas V360](./tabelas-v360)
+- [Integrações e payloads](./integracoes-e-payloads)
+- [Operação e importação](./operacao-e-importacao)
+
+## Visão rápida
+
+| Tema | O que cobre |
+| --- | --- |
+| Arquitetura | Orquestração no `n8n`, subworkflows, fluxo ponta a ponta, idempotência e estratégia de estado |
+| Dados | Estrutura das tabelas `CONTA_ENERGIA_DOCUMENTO` e `CONTA_ENERGIA_CONSUMO`, índices, exemplos SQL e auditoria |
+| Integrações | Endpoints do `V360`, envio e polling no `Recognition`, API de e-mail e contratos entre workflows |
+| Operação | Implantação, importação, checklist, troubleshooting e reprocessamento |
+
+## Componentes principais
+
+### Workflows
+
+- `OCREnergia _ Orquestrador.json`
+- `OCREnergia _ Download Arquivo.json`
+- `OCREnergia _ Recognition.json`
+- `OCREnergia _ Envio Email.json`
+
+### Scripts SQL
+
+- `V360.0002.CONTA_ENERGIA_DOCUMENTO.sql`
+- `V360.0003.CONTA_ENERGIA_CONSUMO.sql`
+- `V360.0004.ALTER_CONTA_ENERGIA_CONSUMO_OCR.sql`
+- `V360.0005.RESET_CONTA_ENERGIA_CONSUMO.sql`
+- `V360.0006.RESET_CONTA_ENERGIA_DOCUMENTO.sql`
+
+## Escopo coberto
+
+- captura incremental de documentos no `V360`
+- retomada de documentos pendentes já registrados
+- renovação da URL assinada do PDF antes do download
+- envio do arquivo para o `Recognition`
+- polling assíncrono com até 120 tentativas
+- persistência de status e falhas em `CONTA_ENERGIA_DOCUMENTO`
+- persistência dos itens tratados em `CONTA_ENERGIA_CONSUMO`
+- vinculação com `GCOLIGADA` e `TMOVCOMPL`
+- envio de resumo operacional por e-mail
+- execução manual e agendada
+
+## Estrutura da documentação
+
+Cada página desta pasta foi organizada para ser publicada como uma documentação independente no Mintlify, mantendo navegação cruzada e leitura sequencial.

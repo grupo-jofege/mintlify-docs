@@ -1,0 +1,179 @@
+---
+title: "Arquitetura da solução"
+description: "Arquitetura da solução V360 + Recognition + SQL Server para OCR de contas de energia."
+---
+
+# Arquitetura da solução
+
+Esta página descreve como a solução foi organizada no `n8n`, quais são os componentes principais e como o fluxo atravessa captura, OCR, persistência e notificação.
+
+## Leitura relacionada
+
+- [OCR Contas Energia](./README)
+- [Tabelas V360](./tabelas-v360)
+- [Integrações e payloads](./integracoes-e-payloads)
+- [Operação e importação](./operacao-e-importacao)
+
+## Visão geral
+
+A solução substitui o processo Python legado por uma arquitetura em `n8n`, preservando a regra de negócio principal:
+
+1. buscar documentos de energia no `V360`
+2. registrar e controlar o documento em `CONTA_ENERGIA_DOCUMENTO`
+3. obter a URL válida do PDF
+4. baixar o arquivo
+5. enviar o PDF ao `Recognition`
+6. fazer polling até conclusão
+7. persistir o resultado tratado em `CONTA_ENERGIA_CONSUMO`
+8. enviar o resumo da execução por e-mail
+
+## Componentes
+
+|  | Componente | Papel |
+| --- | --- | --- |
+| \`OCREnergia | Orquestrador\` | coordena a execução, busca documentos, controla a fila e chama os subworkflows |
+| \`OCREnergia | Download Arquivo\` | renova a URL assinada e realiza o download do PDF |
+| \`OCREnergia | Recognition\` | envia o arquivo para OCR, faz polling, transforma o retorno e persiste os consumos |
+| \`OCREnergia | Envio Email\` | consolida o resumo operacional e dispara a notificação final |
+
+## Workflow orquestrador
+
+Responsabilidades principais:
+
+- receber disparo manual ou agendado
+- carregar configurações
+- buscar novos documentos no `V360`
+- recuperar pendentes que já estão no banco
+- unificar a fila de processamento
+- chamar os subworkflows conforme o estado de cada item
+- finalizar a execução com o workflow de e-mail
+
+### Gatilhos
+
+- `Manual Trigger`
+- `Schedule Trigger 05h`
+
+### Agenda
+
+- cron `0 5 * * *`
+- execução diária às `05:00`
+
+## Subworkflow de download
+
+Esse fluxo existe porque a URL do PDF retornada pelo `V360` é temporária. A cada processamento o documento precisa ser consultado novamente antes do download.
+
+Responsabilidades:
+
+- renovar autenticação no `V360`
+- consultar o documento específico
+- extrair a URL assinada válida
+- baixar o PDF
+
+## Subworkflow de recognition
+
+Responsabilidades:
+
+- retomar documentos que já possuem `RECOGNITION_DOCUMENT_ID`
+- enviar o PDF ao `Recognition`
+- controlar o polling até o status final
+- transformar o OCR em itens de consumo
+- inserir dados em `CONTA_ENERGIA_CONSUMO`
+- atualizar sucesso, pendência ou falha em `CONTA_ENERGIA_DOCUMENTO`
+
+## Subworkflow de e-mail
+
+Responsabilidades:
+
+- consultar os documentos alterados na execução
+- consolidar totais por status
+- montar o HTML do resumo
+- disparar a notificação final
+
+## Fluxo ponta a ponta
+
+```text
+Schedule/Manual
+  -> Orquestrador
+    -> Buscar novos documentos no V360
+    -> Buscar documentos pendentes no banco
+    -> Unificar fila
+    -> Para cada documento
+         -> Upsert em CONTA_ENERGIA_DOCUMENTO
+         -> Download Arquivo
+         -> Recognition
+              -> Envio
+              -> Polling
+              -> Transformação
+              -> Persistência do consumo
+              -> Atualização do status final
+    -> Envio Email
+```
+
+## Estratégia de idempotência
+
+### Documento
+
+A tabela `CONTA_ENERGIA_DOCUMENTO` evita duplicidade usando:
+
+- `ID_V360_DOCUMENTO`
+- `CHAVE_NEGOCIO`
+
+### Consumo
+
+A tabela `CONTA_ENERGIA_CONSUMO` usa a combinação de:
+
+- `ID_DOC`
+- `ORDEM_CONSUMO`
+
+Quando um documento é reprocessado, os consumos antigos são removidos antes da reinserção do conjunto novo.
+
+## Estratégia de estado
+
+Estados principais do documento:
+
+- `PENDENTE`
+- `BAIXANDO_PDF`
+- `PROCESSANDO_RECOGNITION`
+- `PROCESSADO`
+- `ERRO`
+
+Estados mais comuns do `Recognition`:
+
+- `ENVIADO`
+- `CREATED`
+- `STARTING`
+- `PROCESSING`
+- `PROCESSED`
+- `CANCELED`
+- `ERRO_ENVIO`
+
+## Decisões importantes
+
+### URL do PDF não é persistida
+
+As URLs retornadas pelo `V360` expiram. Por isso a solução sempre consulta novamente o documento antes do download.
+
+### Polling preserva a lógica do legado
+
+O polling do `Recognition` foi mantido com:
+
+- intervalo de `5 segundos`
+- até `120 tentativas`
+- timeout lógico de `10 minutos`
+
+### Separação por responsabilidade
+
+A divisão em subworkflows reduz acoplamento, facilita manutenção e simplifica a rastreabilidade da execução.
+
+## Riscos técnicos conhecidos
+
+- dependência dos IDs dos subworkflows após importação no `n8n`
+- dependência do linked server usado para `GCOLIGADA` e `TMOVCOMPL`
+- dependência da API de e-mail configurada em `config.urlJofegeMail`
+
+## Próximos aprimoramentos
+
+- criar tabela de auditoria por execução
+- persistir resumo consolidado por rodada
+- adicionar retentativa automática para envio de e-mail
+- externalizar configurações sensíveis para credenciais do `n8n`
