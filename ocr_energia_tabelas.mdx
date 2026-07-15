@@ -5,8 +5,6 @@ description: "Modelo de dados das tabelas CONTA_ENERGIA_DOCUMENTO e CONTA_ENERGI
 
 # Tabelas V360
 
-Esta página documenta o modelo de dados usado pela solução. A estrutura foi separada para manter o controle operacional do documento de um lado e os dados tratados do OCR do outro.
-
 ## Leitura relacionada
 
 - [OCR Contas Energia](./ocr_energia_index)
@@ -21,168 +19,60 @@ Esta página documenta o modelo de dados usado pela solução. A estrutura foi s
 | `CONTA_ENERGIA_DOCUMENTO` | controla o ciclo de vida do documento, estados, auditoria, OCR e falhas |
 | `CONTA_ENERGIA_CONSUMO` | armazena os itens tratados do OCR prontos para análise, integração e BI |
 
-## Scripts principais
-
-- `V360.0002.CONTA_ENERGIA_DOCUMENTO.sql`
-- `V360.0003.CONTA_ENERGIA_CONSUMO.sql`
-- `V360.0004.ALTER_CONTA_ENERGIA_CONSUMO_OCR.sql`
-- `V360.0005.RESET_CONTA_ENERGIA_CONSUMO.sql`
-- `V360.0006.RESET_CONTA_ENERGIA_DOCUMENTO.sql`
-
 ## CONTA\_ENERGIA\_DOCUMENTO
 
-Objetivos:
+Campos operacionais importantes:
 
-- registrar o documento recebido do `V360`
-- controlar o ciclo do `Recognition`
-- concentrar auditoria, erros e metadados técnicos
-
-### Colunas principais
-
-| Coluna | Tipo | Finalidade |
-| --- | --- | --- |
-| `ID` | `BIGINT IDENTITY` | chave primária interna |
-| `ID_V360_DOCUMENTO` | `BIGINT` | identificador do documento no `V360` |
-| `MODEL_TYPE` | `VARCHAR(50)` | tipo do documento, como `electricity` |
-| `CUSTOMER_IDENTIFICATION_NUMBER` | `VARCHAR(20)` | identificação do cliente |
-| `SUPPLIER_IDENTIFICATION_NUMBER` | `VARCHAR(20)` | identificação do fornecedor |
-| `DOCUMENT_NUMBER` | `VARCHAR(50)` | número do documento fiscal |
-| `DOCUMENT_SERIES` | `VARCHAR(20)` | série do documento |
-| `ISSUE_DATE` | `DATE` | data de emissão |
-| `TOTAL_VALUE` | `DECIMAL(18,2)` | valor total do documento |
-| `CHAVE_NEGOCIO` | `VARCHAR(300)` | chave funcional contra duplicidade |
-| `STATUS_DOCUMENTO` | `VARCHAR(40)` | status macro do documento |
-| `STATUS_RECOGNITION` | `VARCHAR(40)` | status detalhado do OCR |
-| `TENTATIVAS_DOWNLOAD` | `INT` | contador de tentativas de download |
-| `TENTATIVAS_RECOGNITION` | `INT` | contador de tentativas de OCR |
-| `DT_ULTIMA_TENTATIVA` | `DATETIME2(0)` | última tentativa de processamento |
-| `DT_PROCESSADO_SUCESSO` | `DATETIME2(0)` | data de conclusão com sucesso |
-| `TRATADA` | `BIT` | indicador final de tratamento |
-| `RECOGNITION_DOCUMENT_ID` | `VARCHAR(100)` | identificador do lote no `Recognition` |
-| `RECOGNITION_PAYLOAD` | `NVARCHAR(MAX)` | payload bruto de retorno |
-| `ETAPA_ERRO` | `VARCHAR(40)` | etapa técnica da falha |
-| `MENSAGEM_ERRO` | `NVARCHAR(4000)` | mensagem detalhada do erro |
-| `RECCREATEDBY` | `VARCHAR(50)` | sempre `n8n.integracao` |
-| `RECMODIFIEDBY` | `VARCHAR(50)` | sempre `n8n.integracao` |
-
-### Restrições
-
-- `PK_CONTA_ENERGIA_DOCUMENTO`
-- `UQ_CONTA_ENERGIA_DOCUMENTO_ID_V360`
-- `UQ_CONTA_ENERGIA_DOCUMENTO_CHAVE`
-
-### Índices
-
-- `IX_CONTA_ENERGIA_DOCUMENTO_STATUS`
-- `IX_CONTA_ENERGIA_DOCUMENTO_ISSUE_DATE`
+- `STATUS_DOCUMENTO`
+- `STATUS_RECOGNITION`
+- `ETAPA`
+- `ETAPA_ERRO`
+- `MENSAGEM_ERRO`
+- `MOTIVO_ERRO`
+- `RECOGNITION_DOCUMENT_ID`
+- `RECOGNITION_PAYLOAD`
 
 ## CONTA\_ENERGIA\_CONSUMO
 
-Objetivos:
+Campos de vínculo importantes:
 
-- armazenar o retorno tratado do OCR
-- manter compatibilidade semântica com o legado
-- vincular cada item ao documento controlado em `CONTA_ENERGIA_DOCUMENTO`
-
-### Colunas principais
-
-| Coluna | Tipo | Finalidade |
-| --- | --- | --- |
-| `ID` | `BIGINT IDENTITY` | chave primária |
-| `ID_DOC` | `BIGINT` | referência ao documento em `CONTA_ENERGIA_DOCUMENTO` |
-| `CODCOLIGADA` | `INT` | coligada vinculada via CNPJ |
-| `IDMOV` | `INT` | movimento vinculado via `TMOVCOMPL.IDV360` |
-| `CNPJEMPRESA` | `VARCHAR(14)` | CNPJ da empresa |
-| `NOMEEMPRESA` | `VARCHAR(255)` | nome da empresa |
-| `NOMEPRESTADOR` | `VARCHAR(255)` | nome do prestador |
-| `CNPJPRESTADOR` | `VARCHAR(20)` | CNPJ do prestador |
-| `NUMINSTALACAO` | `VARCHAR(255)` | número da instalação |
-| `DESCRICAO` | `VARCHAR(255)` | descrição da linha de consumo |
-| `CONSUMOFINAL` | `DECIMAL(18,4)` | valor final de consumo |
-| `CONSUMOTARIFA` | `DECIMAL(18,6)` | tarifa unitária |
-| `VALOR` | `DECIMAL(18,4)` | valor monetário do item |
-| `DATADOCUMENTO` | `DATE` | data do documento |
-| `DATAVENCIMENTO` | `DATE` | data de vencimento |
-| `NUMERODOC` | `VARCHAR(255)` | número do documento |
-| `ORDEM_CONSUMO` | `INT` | ordem da linha no OCR |
-| `JSON_RECOGNITION_ITEM` | `NVARCHAR(MAX)` | item bruto retornado pelo OCR |
-| `RECCREATEDBY` | `VARCHAR(50)` | sempre `n8n.integracao` |
-| `RECMODIFIEDBY` | `VARCHAR(50)` | sempre `n8n.integracao` |
-
-### Restrições e índices
-
-- `PK_CONTA_ENERGIA_CONSUMO`
-- `FK_CONTA_ENERGIA_CONSUMO_DOCUMENTO`
-- `IX_CONTA_ENERGIA_CONSUMO_DOCUMENTO`
-- `IX_CONTA_ENERGIA_CONSUMO_COLIGADA_IDMOV`
-- `UX_CONTA_ENERGIA_CONSUMO_DOCUMENTO_ORDEM`
+- `ID_DOC`
+- `CODCOLIGADA`
+- `IDMOV`
+- `ORDEM_CONSUMO`
+- `JSON_RECOGNITION_ITEM`
 
 ## Regras de vinculação
 
-O vínculo com `GCOLIGADA` e `TMOVCOMPL` usa o CNPJ do cliente e o `ID_V360_DOCUMENTO` para tentar localizar:
+O vínculo com `GFILIAL` (somente `ATIVO = 1`) e `TMOVCOMPL` usa o CNPJ do cliente e o `ID_V360_DOCUMENTO` para tentar localizar:
 
 - `CODCOLIGADA`
 - `IDMOV`
 
-Essa etapa é importante para conectar o OCR ao contexto operacional do ERP.
+Exemplo conceitual:
 
-## Auditoria
-
-Em ambas as tabelas:
-
-- `RECCREATEDBY = 'n8n.integracao'`
-- `RECMODIFIEDBY = 'n8n.integracao'`
+```sql
+SELECT
+  TMOVCOMPL.IDMOV,
+  FILIAL.CODCOLIGADA
+FROM CONTA_ENERGIA_DOCUMENTO DOC
+INNER JOIN [10.10.1.4].[CORPORE].[dbo].[GFILIAL] FILIAL
+  ON FILIAL.ATIVO = 1
+ AND REPLACE(REPLACE(REPLACE(FILIAL.CGC, '.', ''), '/', ''), '-', '')
+    COLLATE SQL_Latin1_General_CP1_CI_AI = DOC.CUSTOMER_IDENTIFICATION_NUMBER
+LEFT JOIN [10.10.1.4].[CORPORE].[dbo].[TMOVCOMPL] TMOVCOMPL
+  ON TMOVCOMPL.IDV360 = DOC.ID_V360_DOCUMENTO
+ AND TMOVCOMPL.CODCOLIGADA = FILIAL.CODCOLIGADA
+```
 
 ## Idempotência
 
-### Documento
-
-A duplicidade é evitada por:
+Documento:
 
 - `ID_V360_DOCUMENTO`
 - `CHAVE_NEGOCIO`
 
-### Consumo
+Consumo:
 
-Cada documento pode ser reinserido com segurança porque o fluxo remove o conjunto anterior antes de gravar o novo resultado.
-
-## Consultas operacionais úteis
-
-### Pendentes
-
-```sql
-SELECT *
-FROM dbo.CONTA_ENERGIA_DOCUMENTO
-WHERE ISNULL(TRATADA, 0) = 0
-  AND ISNULL(STATUS_DOCUMENTO, 'PENDENTE') NOT IN ('PROCESSADO', 'ERRO');
-```
-
-### Erros
-
-```sql
-SELECT
-  ID_V360_DOCUMENTO,
-  DOCUMENT_NUMBER,
-  STATUS_DOCUMENTO,
-  STATUS_RECOGNITION,
-  ETAPA_ERRO,
-  MENSAGEM_ERRO,
-  RECMODIFIEDON
-FROM dbo.CONTA_ENERGIA_DOCUMENTO
-WHERE STATUS_DOCUMENTO = 'ERRO'
-ORDER BY RECMODIFIEDON DESC;
-```
-
-### Sucesso com quantidade de consumos
-
-```sql
-SELECT
-  DOC.ID_V360_DOCUMENTO,
-  DOC.DOCUMENT_NUMBER,
-  COUNT(CONS.ID) AS QTDE_CONSUMOS
-FROM dbo.CONTA_ENERGIA_DOCUMENTO DOC
-LEFT JOIN dbo.CONTA_ENERGIA_CONSUMO CONS
-  ON CONS.ID_DOC = DOC.ID
-WHERE DOC.STATUS_DOCUMENTO = 'PROCESSADO'
-GROUP BY DOC.ID_V360_DOCUMENTO, DOC.DOCUMENT_NUMBER;
-```
+- `ID_DOC`
+- `ORDEM_CONSUMO`
