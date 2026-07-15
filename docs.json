@@ -46,11 +46,11 @@
       {
         "group": "OCR Contas Energia",
         "pages": [
-          "ocr-energia",
-          "arquitetura",
-          "tabelas",
-          "integracao",
-          "operacoes"
+          "ocr_energia_index",
+          "ocr_energia_arquitetura",
+          "ocr_energia_tabelas",
+          "ocr_energia_integracao",
+          "ocr_energia_operacoes"
         ]
       }
     ]
