@@ -41,6 +41,9 @@ A abertura da solicitação acontece via portal, e a aprovação ocorre utilizan
 2. Desligamento \+ Substituição (quando aplicável).
 3. Transferência de funcionário.
 4. Alteração de dados funcionais (ex.: alterações salariais).
+
+> **Atualização (reunião técnica de 14/07/2026 com a TOTVS):** o ambiente de homologação do RM já tem cadastrados os tipos **Aumento de Quadro, Substituição, Treinamento, Abertura de Turmas e Alteração de Dados Funcionais** (modelo de aprovações por seção). Vale alinhar a nomenclatura da Fase 2 com esses tipos reais em vez dos nomes hipotéticos acima. Detalhes em [Reunião 2026-07-14 — Integração Técnica RM/Agilis](/prh_reuniao_14-07_integracao-tecnica).
+
 5. Motor de Markdown para páginas dinâmicas (conteúdo de apoio, FAQs, políticas, instruções).
 6. Banco não relacional para armazenar a especificação e o conteúdo do Markdown (páginas e navegação), permitindo publicar/atualizar páginas sem deploy do portal.
 
@@ -221,6 +224,7 @@ Objetivo: proteger o portal contra acoplamento aos formatos e regras do RM.
 5. Normalizar/interpretar status do RM em um conjunto estável de status do portal
 6. Tratar autenticação/headers/tokens exigidos pelo RM
 7. Implementar retry, timeouts e erros padronizados
+8. Suportar chamadas **SOAP (TBC)** para processos ainda não migrados para REST — confirmado pela TOTVS que a execução de processos (ex.: "Inserir no Fluxo") ainda depende do SOAP; ver [Reunião 2026-07-14 — Integração Técnica RM/Agilis](/prh_reuniao_14-07_integracao-tecnica)
 
 **10.4. Conteúdo Markdown \+ NoSQL (Fase 2)**
 
@@ -247,6 +251,7 @@ Objetivo: proteger o portal contra acoplamento aos formatos e regras do RM.
 11. statusNormalizado
 12. statusRawRm (quando aplicável)
 13. datas (criação, envio, última sincronização, conclusão)
+14. codigoLigado, codigoLocal, codigoAtendimento (identificadores que o RM grava na tabela `VREC_*` após o "Inserir no Fluxo" — ver [Reunião 2026-07-14](/prh_reuniao_14-07_integracao-tecnica))
 
 **11.2. Entidade: PáginaMarkdown (Fase 2)**
 
